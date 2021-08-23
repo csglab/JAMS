@@ -1,352 +1,152 @@
 #!/bin/env python3
-import sys
-import gzip
+"""
+docstring sdfsdf
+"""
 import argparse
-import os.path
+import os
+import sys
 from src import my_utils
 from src import rcade
 from src import methyl_chip
 
-parser = argparse.ArgumentParser(description='If ZFP, run rcade, if not preprocess data for Methyl-ChIP')
+parser = argparse.ArgumentParser(description='')
 
-################################################
-###############    IN FILE   ###################
-################################################
-parser.add_argument('--task', dest='TASK', \
-                    action='store', \
-                    default='None', \
-                    nargs="*", \
-                    help='tasks: RCADE2, preMethyl-ChIP, Methyl-ChIP.')
-
-parser.add_argument('--prot_fam', dest='PROT_FAM', \
-                    action='store', \
-                    default='None', \
-                    help='protein family, example: C2H2')
-# ChIP-seq
-parser.add_argument('--peaks', dest='PEAKS', \
-                    action='store', \
-                    default='None', \
-                    help='Peaks from ChiP-X experiment, output from MACS2')
-
-parser.add_argument('--peaks_format', dest='PKFORMAT', \
-                    action='store', \
-                    help='Peak format: ENCODE (TO-DO), MACS2')
-# PFM
-parser.add_argument('--pfm', dest='PFM', \
-                    action='store', \
-                    nargs="?", \
-                    help='Position frequency matrix, Transfac-like format?')
-
-# cell line
-parser.add_argument('--cell_line', dest='cell_line', \
-                    action='store', \
-                    nargs="?", default="cell line name", \
-                    help='String cell line')
-
-################################################
-###############      ID    #####################
-################################################
-# Uniprot ID
-parser.add_argument('--uniprot_id', dest='UNI_ID', action='store', \
-                    default='UNIPROT_ID', help='Uniprot ID, ex: CTCF_HUMAN')
-# Protein name
-parser.add_argument('--prot_name', dest='PROT_NAME', action='store', \
-                    default='protein name', help='ex: CTCF')
-# Experiment id
-parser.add_argument('--experiment_id', dest='EXP_ID', \
-                    action='store', \
-                    default='EXP_ID', help='Experiment ID. ex: CTCF_rep1')
-
-################################################
-###############     RCADE  #####################
-################################################
-parser.add_argument('--c2h2_seq', dest='C2H2_SEQ', \
-                    action='store', \
+parser.add_argument('--task', dest='TASK',
+                    action='store', default='None',
+                    nargs="*", help='tasks: DATA, GLM.')
+## ID names
+parser.add_argument('--experiment_id', dest='EXP_ID', action='store',
+                    default='EXP_ID', help='Experiment ID. ex: CTCF_rep2_HEK293')
+## RCADE
+parser.add_argument('--c2h2_seq', dest='C2H2_SEQ', action='store',
                     help='Protein sequence: ACCAHHA.')
-
-parser.add_argument('--rc_top_peaks', dest='RC_TOP_PEAKS', \
-                    action='store', \
-                    default=500, \
+parser.add_argument('--rc_top_peaks', dest='RC_TOP_PEAKS',
+                    action='store', default=250,
                     help='top peaks that will be use for RCADE')
-
-parser.add_argument('--rc_summit', dest='RC_SUMMIT', \
-                    action='store', \
-                    default=500, \
+parser.add_argument('--rc_summit', dest='RC_SUMMIT',
+                    action='store', default=500,
                     help='Size of region with summit as center, for RCADE')
+parser.add_argument('--prot_fam', dest='PROT_FAM',
+                    action='store', default='None',
+                    help='protein family, example: C2H2')
 
-################################################
-###############     METHYL-CHIP    #############
-################################################
-# Range
-parser.add_argument('--range', dest='RANGE', \
-                    action='store', \
-                    default=100, \
-                    help='RANGE')
-# WBGS data, methylated
+## JAMS
+parser.add_argument('--range', dest='RANGE', action='store',
+                    default=100, help='RANGE')
+parser.add_argument('--tag_summit_range', dest='TAG_SUMMIT_RANGE',
+                    action='store', default=int(400),
+                    help='Range from the best motif match where the read tags will be extracted. Default= 400')
 
-parser.add_argument('--wgbs_met_data', \
-                    dest='MET', \
-                    action='store', \
-                    help='bigwig file (.bw) from whole bisulfite genome sequencing, methylated, bismark format?')
-# WBGS data, unmethylated
+####################  Input Files  ####################
+## BAMs
+parser.add_argument('--bam_control', dest='BAM_CONTROL', action='store',
+                    help='Indexed sorted bam file for the ChIP-seq control')
+parser.add_argument('--bam_pulldown', dest='BAM_PULLDOWN', action='store',
+                    help='Indexed and sorted bam file for ChIP-seq  pulldown ')
+## Peaks
+parser.add_argument('--peaks', dest='PEAKS',
+                    action='store', default='None',
+                    help='Peaks from ChiP-seq experiment, output from MACS "*_peaks.xls"')
+parser.add_argument('--pfm', dest='PFM',
+                    action='store', nargs="?",
+                    help='Position frequency matrix, Transfac format')
+## Methylation maps
+parser.add_argument('--wgbs_met_data', dest='MET', action='store',
+                    help='Methylated counts (BigWig)')
+parser.add_argument('--wgbs_unmet_data', dest='UNMET', action='store',
+                    help='Unmethylated counts (BigWig)')
+## DNA accessibility
+parser.add_argument('--dna_acc_map', dest='DNA_ACC', action='store',
+                    help='Normalized DNA accessibility from ENCODE in bigwig file')
+parser.add_argument('--genome_fa', dest='GENOME',
+                    action='store', help='Reference sequence in the FASTA format (indexed).')
+## Other files
+parser.add_argument('--chr_sizes', dest='CHR_SIZES',
+                    action='store', help='Chromosome sizes')
+parser.add_argument('--mask_regions', dest='REPEATS',
+                    action='store', help='Genomic regions to be masked (repeats or/and blacklisted regions).')
 
-parser.add_argument('--wgbs_unmet_data', \
-                    dest='UNMET', \
-                    action='store', \
-                    help='bigwig file (.bw) from whole bisulfite genome sequencing, unmethylated, bismark format?')
-
-
-parser.add_argument('--dna_acc_map', \
-                    dest='DNA_ACC', \
-                    action='store', \
-                    help='bigwig file for DNA accessibility, from DNase-seq')
-
-################################################
-###############      OPTIONAL    ###############
-################################################
-# Reference files
-parser.add_argument('--genome', dest='GENOME', \
-                    action='store', \
-                    help='Genome in fasta format')
-
-parser.add_argument('--chr_sizes', dest='CHR_SIZES', \
-                    action='store', \
-                    help='Chromosome sizes')
-
-parser.add_argument('--repeats', dest='REPEATS', \
-                    action='store', \
-                    help='Repeats')
-
-###### OUT  ######
-parser.add_argument('--out_dir', dest='OUT_PATH', action='store', \
-                    default='./data/out', help='')
+## MAIN/JAMS output directory
+parser.add_argument('--output_dir', dest='OUT_PATH', action='store',
+                    default='./data/out',
+                    help='The path to the folder that will contain the output files.')
+## Formatted data files
+parser.add_argument('--data_dir', dest='IN_PATH', action='store',
+                    default=False,
+                    help='The path to the folder that contains the required files to build the JAMS model.')
+## 
+parser.add_argument('--flanking', dest='FLANKING', action='store', \
+                    default='20',
+                    help='The number of base pairs around the core motif that will be included in the model.')
 
 args = parser.parse_args()
-TAGCUTOFF = 0 ## Why?
-AFFIMX = "./src/AffiMx"
+TAGCUTOFF = 0 # Why?
 
 if not my_utils.check_arguments(args):
-    exit(2)
+    sys.exit(2)
 
-################################################
-###############     Tools   ####################
-################################################
+## Tools
 def read_external_tools():
     tools = {}
 
     ## ahcorcha: edit these lines when running in different machines.
-    tools = {
-        "RCADE2": "${HOME}/tools/RCADE2",
-        "Methyl_ChIP": "${HOME}/tools/MethylChIP",
-        "AffiMx": "${P2}/binding_affinity/src/AffiMx"
-    }
-    # with open("./requirements.ref", "r") as requirements:
-    #     for line in requirements:
-    #         if line[0] == "#":
-    #             continue
-    #         line = line.replace("\n", "").split("=")
-    #         if line[0] == "RCADE2":
-    #             tools["RCADE2"] = line[1]
-    #         if line[0] == "Methyl_ChIP":
-    #             tools["Methyl_ChIP"] = line[1]
+    tools = { "RCADE2": "${HOME}/tools/RCADE2"}
+
     return tools
 
-def run_rcade2(tools):
-
-    rcade_out = args.OUT_PATH + "/rcade2"
-    rcade_prefix = rcade_out + "/" + args.EXP_ID
-    my_utils.run_cmd("rm -R %s " % (rcade_out))
-    my_utils.run_cmd("mkdir -p %s" % (rcade_out))
-    top_peaks = "%s.top_%s_peaks.bed" % (rcade_prefix, args.RC_TOP_PEAKS)
-
-    rcade.get_top_peaks(args.PEAKS, args.RC_TOP_PEAKS, \
-                        rcade_prefix, chr_sizes, args.REPEATS, \
-                        top_peaks, args.RC_SUMMIT, args.PKFORMAT)
-
-    peaks_seq = "%s.top_%s_summits.%sbp.fasta" % \
-                (rcade_prefix, str(args.RC_TOP_PEAKS), str(args.RC_SUMMIT))
-    
-    ## Get peak protein sequences
-    peak_seq_cmd = "bedtools getfasta -fi %s -bed %s > %s" % \
-                   (args.GENOME, top_peaks, peaks_seq)
-    my_utils.run_cmd(peak_seq_cmd)
-
-    ## check if path is global
-    c2h2_seq = my_utils.check_path(args.C2H2_SEQ)
-    peaks_seq = my_utils.check_path(peaks_seq)
-    
-    # Run RCADE2
-    rcade_cmd = "cd %s; bash RCOpt.sh %s %s %s" % (tools["RCADE2"], \
-                                                   args.EXP_ID, \
-                                                   c2h2_seq, peaks_seq)
-    my_utils.run_cmd(rcade_cmd)
-    # Here is where rcade dumps the results.
-    rcade_path = "%s/out/%s" % (tools["RCADE2"], args.EXP_ID)
-    mv_cmd = "mv %s %s" %(rcade_path, rcade_out)
-    my_utils.run_cmd(mv_cmd)
-
-
-    PFM = "%s/%s/results.opt.PFM.txt" %(rcade_out, args.EXP_ID)
-    
-    # Check if exists, 
-    if not os.path.isfile(PFM):
-        print("Could not create the PFM for C2H2 protein. Check RCADE log")
-    
-    return PFM
-
-def run_methyl_chip(tools, task):
-
-    methyl_dir = args.OUT_PATH + "/methyl_chip"
-    methyl_chip_in = args.OUT_PATH + "/methyl_chip/"
-    
-    if task == "pre":
-
-        my_utils.run_cmd("rm -R %s" % (methyl_dir))
-        my_utils.run_cmd("mkdir -p %s" % (methyl_dir))
-        ## Copy PFM to input directory.
-        my_utils.run_cmd("cp %s %s/%s_%s.pfm.txt" % (args.PFM, methyl_dir, \
-                                                     args.EXP_ID, args.UNI_ID))
-
-        out_prefix = "%s/%s.%s" % (methyl_dir, \
-                                   args.EXP_ID, \
-                                   args.UNI_ID)
-    
-        bed_summits = "%s/%s.summits.vRepeats.bed" % (methyl_dir, args.EXP_ID)
-        score_file = "%s/%s.summits.vRepeats.scores.txt" % \
-                     (methyl_dir, args.EXP_ID)
-    
-        methyl_chip.write_summit_and_score_beds(bed_summits, \
-                                                score_file, \
-                                                peaks, \
-                                                methyl_dir, \
-                                                chr_sizes, \
-                                                args.REPEATS, \
-                                                args.RANGE, \
-                                                args.PKFORMAT)
-    
-        ############################################################
-        ############################################################
-        print("Retrieving summit sequences ... ")
-        fasta_file= "%s/%s.summits.vRepeats.fa" % (methyl_dir, args.EXP_ID)
-        methyl_chip.get_fasta_file(args.GENOME, bed_summits, fasta_file)
-        ############################################################
-        ############################################################
-        print("Running AffiMx ... ")
-        affimx_prefix = out_prefix + ".affimx"
-        affimx_cmd = "%s -pwm %s -fasta %s -out %s > %s.log" % \
-                     (tools["AffiMx"], \
-                      args.PFM, \
-                      fasta_file, \
-                      affimx_prefix, \
-                      affimx_prefix)
-        my_utils.run_cmd(affimx_cmd)
-
-        ############################################################
-        ############################################################
-        #  Create the BED file of aligned genomic coordinates
-        # Output from Affimx
-        affimx_position_path = "%s.position.txt" % (affimx_prefix)
-        aligned_positions_bed = "%s.aligned_positions.bed" % (out_prefix)
-        methyl_chip.write_aligned_positions_bed(affimx_position_path, \
-                                                aligned_positions_bed)
-
-        ############################################################
-        ############################################################
-        aligned_fasta = out_prefix + ".aligned_sequences.txt"
-        methyl_chip.write_aligned_fasta(aligned_positions_bed, \
-                                        aligned_fasta, args.GENOME, \
-                                        chr_sizes, args.RANGE)
-
-        aligned_numeric = out_prefix + ".aligned_sequences.numeric.mx.txt"
-        aligned_tab = out_prefix + ".aligned_sequences.tabulated.mx.txt"
-        methyl_chip.write_aligned_numeric_tab(aligned_fasta, \
-                                              aligned_numeric, \
-                                              aligned_tab)
-        ### Nonmethylated 
-        nonmet_seq = out_prefix + ".aligned_sequences.fasta.nonmethylreads"
-        methyl_chip.get_methylreads(aligned_positions_bed, \
-                                    args.UNMET, nonmet_seq)
-        ### Methylated
-        met_seq = out_prefix + ".aligned_sequences.fasta.methylreads"
-        methyl_chip.get_methylreads(aligned_positions_bed, \
-                                    args.MET, met_seq)
-        
-        ############################################################
-        ###############           DNase-seq          ###############
-        ############################################################
-        dna_acc = out_prefix + ".aligned_sequences.fasta.accessibility"
-
-        methyl_chip.get_dna_acc(aligned_positions_bed, \
-                                args.DNA_ACC, dna_acc)
-
-    if task == "MC":
-        
-        ############################################################
-        ## Run Methyl-ChIP
-        # Rscript glm_poisson.methylation.R <experimentName> \
-        #            <flankingSequenceLength> <inputFolder> <outputFolder>
-        methyl_dir = my_utils.check_path(methyl_dir)
-
-        my_utils.remove_tmp_files(methyl_dir)
-
-        methyl_cmd = "Rscript %s/glm_poisson_methylation.R --experiment %s --flanking %s --input_dir %s --output_dir %s --TF_name %s --cell_line %s " % \
-                     (tools["Methyl_ChIP"], \
-                      args.EXP_ID, \
-                      args.FLANKING_SEQ_LEN, \
-                      methyl_chip_in, \
-                      methyl_dir, \
-                      args.PROT_NAME, \
-                      args.cell_line)
-        
-        my_utils.run_cmd(methyl_cmd, dry=False)
         
 if __name__ == '__main__':
 
-    args.FLANKING_SEQ_LEN = 20
     tools = read_external_tools()
-    chr_sizes = my_utils.read_chr_size(args.CHR_SIZES)
+
+    my_utils.run_cmd("mkdir -p %s" % ( args.OUT_PATH ))
     
-    if args.PKFORMAT == "MACS":
-        peaks = my_utils.read_macs(args.PEAKS)
-
-    elif args.PKFORMAT == "ENCODE":
-        peaks = my_utils.read_encode(args.PEAKS)
-        
-    else:
-        print("You need too specify format with --peaks_format")
-        exit(2)
-
-    ## Not a C2H2 protein.
+    ## Copy peak file to input directory.
+    # my_utils.run_cmd("cp %s %s" % \
+    #                  (args.PEAKS, args.OUT_PATH))
+    
+    #### Check if the TF is a C2H2
+    ## if not, requires PFM.
     if  args.PROT_FAM != "C2H2" and args.PFM == "None":
         print("Not a C2H2 protein, you need to specify a PFM")
         exit(2)
-        
+    ## if not, you can't run RCADE        
     if args.PROT_FAM != "C2H2" and "RCADE2" in args.TASK:
-
         print("RCADE only works with C2H2-ZFP")
         exit(2)
 
-    # A C2H2 protein
+    ## you need to either specify a PFM or run RCADE
     if args.PFM == "None" and "RCADE2" not in args.TASK:
         print("You need to specify a PFM")
         exit(2)
 
+    ## Only run RCADE for C2H2
     if args.PROT_FAM == "C2H2" and "RCADE2" in args.TASK :
         print("Running RCADE2")
-        args.PFM = run_rcade2(tools)
+        args.PFM = rcade.run_rcade2(tools, args)
         
-    if "preMethyl-ChIP" in args.TASK:
-        print("Running preMethyl-ChIP")
-        run_methyl_chip(tools, "pre")
+    ## Create the input directory for Methyl-ChIP
+    if "DATA" in args.TASK:
 
-    if "Methyl-ChIP" in args.TASK:
-        print("Running Methyl-ChIP")
-        run_methyl_chip(tools, "MC")
+        if args.IN_PATH == False:
 
+            args.IN_PATH = args.OUT_PATH + "/" + args.EXP_ID + "_input_dir"
+            my_utils.run_cmd("mkdir -p %s" % ( args.IN_PATH ))
+            
+        args.PEAKS = my_utils.read_peaks(args.PEAKS)
+        print("Extracting and formating data ...")
+        methyl_chip.pre_methyl_chip(args)
+        ## Remove temporary files (*.tmp)
+        my_utils.remove_tmp_files(args.IN_PATH)
+        
+    ## 
+    if "GLM" in args.TASK:
+        print("Running JAMS ...")
+        methyl_chip.run_methyl_chip(args)
         
     if "None" in args.TASK:
         print("You need to specify a taks, \nAvailable tasks: RCADE2, MethylChIP")
 
-    # Make this recursive
+    ## Remove temporary files (*.tmp)
     my_utils.remove_tmp_files(args.OUT_PATH)
     print("DONE")

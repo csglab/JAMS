@@ -351,71 +351,191 @@ pre code {
 </div>
 
 
-<div id="jams" class="section level1">
-<h1>JAMS</h1>
-<div id="quantitative-modeling-of-sequence-dna-accessibility-and-methylation-preferences-of-transcription-factors-using-chip-seq-data" class="section level3">
-<h3>Quantitative modeling of sequence, DNA accessibility, and methylation preferences of transcription factors using ChIP-seq data</h3>
+<div id="jams-joint-accessibility-methylation-sequence-models" class="section level1">
+<h1>JAMS: Joint Accessibility-Methylation-Sequence models</h1>
+<div id="quantitative-modeling-of-sequence-dna-accessibility-and-methylation-preferences-of-transcription-factors-using-chip-seq-data." class="section level4">
+<h4>Quantitative modeling of sequence, DNA accessibility, and methylation preferences of transcription factors using ChIP-seq data.</h4>
+<p>The JAMS command has two main tasks (<code>DATA</code>, and <code>GLM</code>). <code>DATA</code> extracts the data required to build the JAMS model. <code>GLM</code> builds the model.</p>
 </div>
-<div id="requirements" class="section level2">
-<h2>Requirements</h2>
+<div id="requirements" class="section level3">
+<h3>Requirements</h3>
 <ul>
-<li>Unix-compatible OS</li>
-<li>R version 3.0.1 or later <a href="http://www.r-project.org/">Download</a></li>
-<li>R “data.table” library</li>
-<li>R “ggplot2” library</li>
-<li>R “ggseqlogo” library</li>
+<li>Unix-compatible OS<br />
+</li>
+<li>R version 3.0.1 or later <a href="http://www.r-project.org/">Download</a><br />
+</li>
+<li>R libraries: data.table, ggplot2, ggseqlogo, ggforce, gridExtra, ggpubr, optparse, ComplexHeatmap, circlize, MASS, and patchwork<br />
+</li>
+<li>Python version 3.6.0 or later<br />
+</li>
+<li><a href="https://github.com/CRG-Barcelona/bwtool">bwtool</a><br />
+</li>
+<li><a href="https://bedtools.readthedocs.io/en/latest/index.html">bedtools</a></li>
+</ul>
+<p>No installation is require for this version.</p>
+<div id="usage" class="section level4">
+<h4>USAGE:</h4>
+<pre><code>./JAMS --task DATA,GLM \
+       --experiment ${EXPERIMENT_ID} \
+       --peaks ${PEAKS} \
+       --wgbs_met_data ${METH} \
+       --wgbs_unmet_data ${UNMETH} \
+       --dna_acc_map ${DNA_ACC} \
+       --genome_fa ${GEN_FA} \
+       --pfm ${PFM} \
+       --chr_sizes ${CHR_SIZES} \
+       --mask_regions ${mask_regions} \
+       --bam_control ${CONTROL_BAM} \
+       --bam_pulldown ${PULLDOWN_BAM} \
+       --tag_summit_range ${SUMMIT_RANGE} \
+       --data_dir ${DATA_DIR}
+       --flanking ${FLANKING} \
+       --output_dir ${OUT_DIR}</code></pre>
+<p>To run an example of JAMS for CTCF in HEK293:</p>
+<p><code>bash 01_JAMS_demo.sh</code></p>
+<p>The input directory can be downloaded from Figshare with the command:</p>
+<pre><code>mkdir ./data/CTCF_demo/01_input_files
+cd ./data/CTCF_demo/01_input_files
+wget &lt;Figshare link&gt;</code></pre>
+</div>
+</div>
+<div id="arguments" class="section level3">
+<h3>ARGUMENTS:</h3>
+<ul>
+<li><code>--peaks &lt;PEAKS&gt;</code></li>
+</ul>
+<p>Peaks from ChiP-seq experiment, output from MACS &quot;*_peaks.xls&quot;.</p>
+<ul>
+<li><code>--wgbs_met_data &lt;METH&gt;</code></li>
+</ul>
+<p>Methylated counts (BigWig).</p>
+<ul>
+<li><code>--wgbs_unmet_data &lt;UNMETH&gt;</code></li>
+</ul>
+<p>Unmethylated counts (BigWig).</p>
+<ul>
+<li><code>--dna_acc_map &lt;DNA_ACC&gt;</code></li>
+</ul>
+<p>Normalized DNA accessibility from ENCODE in bigwig file.</p>
+<ul>
+<li><code>--bam_control &lt;CONTROL_BAM&gt;</code></li>
+</ul>
+<p>Indexed sorted bam file for the ChIP-seq control.</p>
+<ul>
+<li><code>--bam_pulldown &lt;PULLDOWN_BAM&gt;</code></li>
+</ul>
+<p>Indexed and sorted bam file for ChIP-seq pulldown.</p>
+<ul>
+<li><code>--genome_fa &lt;GEN_FA&gt;</code></li>
+</ul>
+<p>Reference sequence in the FASTA format (indexed).</p>
+<ul>
+<li><code>--pfm &lt;PFM&gt;</code></li>
+</ul>
+<p>Position frequency matrix, Transfac format.</p>
+<ul>
+<li><code>--chr_sizes &lt;CHR_SIZES&gt;</code></li>
+</ul>
+<p>Chromosome sizes.</p>
+<ul>
+<li><code>--mask_regions &lt;mask_regions&gt;</code></li>
+</ul>
+<p>Genomic regions to be masked (repeats or/and blacklisted regions).</p>
+<ul>
+<li><code>--experiment &lt;EXPERIMENT_ID&gt;</code></li>
+</ul>
+<p>Experiment ID. ex: CTCF_rep2_HEK293.</p>
+<ul>
+<li><code>--tag_summit_range &lt;SUMMIT_RANGE&gt;</code></li>
+</ul>
+<p>Range from the best motif match where the read tags will be extracted. Default= 400.</p>
+<ul>
+<li><code>--flanking &lt;FLANKING&gt;</code></li>
+</ul>
+<p>The number of base pairs around the core motif that will be included in the model.</p>
+<ul>
+<li><code>--data_dir &lt;DATA_DIR&gt;</code></li>
+</ul>
+<p>The path to the folder that contains the required files to build the JAMS model.</p>
+<ul>
+<li><code>--output_dir &lt;OUT_DIR&gt;</code></li>
+</ul>
+<p>The path to the folder that will contain the output files.</p>
+<p>This should create a <code>./data/CTCF_demo/03_output/JAMS_CTCF_HEK293_GSM2026781_small_flanking_20bps</code> folder, with the output files described in the following sections.</p>
+<p><strong>Output:</strong></p>
+<p>JAMS outputs the following files in the <code>&lt;OUT_DIR&gt;/&lt;EXPERIMENT_ID&gt;_flanking_&lt;FLANKING&gt;bps</code> folder:</p>
+<ul>
+<li><p><code>&lt;experimentName&gt;_log.txt</code> – Text file containing messages produced by the script.</p></li>
+<li><p><code>&lt;experimentName&gt;_XX_train.tab</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_c_train.tab</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_t_train.tab</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_predictors_response.rda</code> –<br />
+</p></li>
+<li><p><code>&lt;experimentName&gt;_dna_acc_by_bins.rda</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_fit_CpG_only_model.rda</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_fit_CpG_only_x.Met.rda</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_methyl_chip_data.rda</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_motif_pulldown.rda</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_dna_acc_vs_tags_heatmap.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_dna_coefficients.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_DNA_accessibility_around_motif.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_meth_vs_tags_heatmap_max_coverage.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_meth_vs_tags_heatmap_sensitive_coverage.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_methylation_correlation_with_binding.pdf</code> – PDF file summarizing the correlation of methylation at each position with the strength of TF binding. The statistics are presented for CpG’s, non-CpG methylation events, and all methylation events combined. Note that since methylation events are locally correlated with each other, interpretation of these graphs can be difficult.</p></li>
+<li><p><code>&lt;experimentName&gt;_methylation_stats.pdf</code> – PDF file summarizing the frequency of methylation at different positions of the sequences. The statistics are presented for CpG’s, non-CpG methylation events, and all methylation events combined.</p></li>
+<li><p><code>&lt;experimentName&gt;_sequence_vs_tags_heatmap.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_tags_vs_lenght.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_coefficients.txt</code> – Text file containing the coefficients of a Poisson regression model that jointly considers DNA sequence and methylation at CpG sites to explain ChIP-seq tag counts.</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_coefficients_with_FDR.txt</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_total_cv_scatterplot.pdf</code> – A PDF file showing the scatterplot of predicted vs. observed logarithm of tag density.</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_control_n_pulldown_motif_logo.pdf</code> – PDF file containing a graphical representation of the above model. The PDF essentially contains a motif logo (after scaling each position to have an average of zero), plus arrows that represent the effect of methylation: blue arrows represent methylation on the positive strand, and light brown arrows represent methylation on the reverse strand; upward arrows indicate positive and statistically significant effect on binding, and downward arrows represent negative and significant effect on binding.</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_control.motif_scaled.txt</code> – Text file containing the exact values shown in the above PDF. Non-significant methylation effects are represented by NA’s.</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_control_motif_logo.pdf</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_pulldown.motif_scaled.txt</code> –</p></li>
+<li><p><code>&lt;experimentName&gt;_mCpG_only_model_pulldown_motif_logo.pdf</code> –</p></li>
 </ul>
 </div>
-<div id="installation" class="section level2">
-<h2>Installation</h2>
-<ul>
-<li>No installation is require for this version</li>
-<li>To test the script, execute this command:</li>
-</ul>
-<blockquote>
-<p>Rscript glm_poisson.methylation.R CTCF_rep2 20 ./example/affimx.100bp ./methyl_glm.out This should create a <code>./methyl_glm.out/CTCF_rep2</code> folder, with the output files described in the following sections.</p>
-</blockquote>
-</div>
-<div id="running-methylchip" class="section level2">
-<h2>Running MethylChIP</h2>
-<div id="required-files" class="section level3">
-<h3>Required files</h3>
-<p>The current version is designed to work with the file structure used by the CSG lab for analysis of C2H2-ZF proteins. MethylChIP requires all the following files to be present in the same folder:</p>
+<div id="running-jams-task-data" class="section level3">
+<h3>Running JAMS’ task: <code>DATA</code></h3>
+<p>Only extracting data in and around the best motif match in ChIP-seq peaks.</p>
+<p>An example is included in the <code>02_JAMS_demo_format_data.sh</code> script:</p>
+<pre><code>./JAMS --task DATA \
+       --experiment ${EXPERIMENT_ID} \
+       --peaks ${PEAKS} \
+       --wgbs_met_data ${METH} \
+       --wgbs_unmet_data ${UNMETH} \
+       --dna_acc_map ${DNA_ACC} \
+       --genome_fa ${GEN_FA} \
+       --pfm ${PWM} \
+       --chr_sizes ${CHR_SIZES} \
+       --mask_regions ${mask_regions} \
+       --bam_control ${CONTROL_BAM} \
+       --bam_pulldown ${PULLDOWN_BAM} \
+       --tag_summit_range ${SUMMIT_RANGE} \
+       --data_dir ${DATA_DIR}</code></pre>
+<p>This creates the input files to build the JAMS model:</p>
 <ol style="list-style-type: decimal">
-<li>AffiMx output file <code>&lt;experimentName&gt;.&lt;UniProtID&gt;.affimx.affinity.txt</code></li>
-<li>Aligned sequence file <code>&lt;experimentName&gt;.&lt;UniProtID&gt;.aligned_sequences.tabulated.mx.txt</code></li>
-<li>Methylated read count file <code>&lt;experimentName&gt;.&lt;UniProtID&gt;.aligned_sequences.fasta.methylreads</code></li>
-<li>Non-methylated read count file <code>&lt;experimentName&gt;.&lt;UniProtID&gt;.aligned_sequences.fasta.nonmethylreads</code></li>
-<li>ChIP-seq tag count file <code>&lt;experimentName&gt;.summits.vRepeats.scores.txt</code></li>
-<li>PFM file for the motif that was used to align the sequences <code>&lt;UniProtID&gt;.pfm.txt</code></li>
+<li>AffiMx output file: <code>&lt;experimentName&gt;_affimx.affinity.txt</code></li>
+<li>Aligned sequence file: <code>&lt;experimentName&gt;_aligned_sequences.tabulated.mx.txt</code></li>
+<li>Methylated read count file: <code>&lt;experimentName&gt;_aligned_sequences.fasta.methylreads</code></li>
+<li>Non-methylated read count file: <code>&lt;experimentName&gt;_aligned_sequences.fasta.nonmethylreads</code></li>
+<li>Normalized DNA accessibility file: <code>&lt;experimentName&gt;_aligned_sequences.fasta.accessibility</code></li>
+<li>ChIP-seq tag count file: <code>&lt;experimentName&gt;_summits.vRepeats.scores.txt</code></li>
+<li>PFM file for the motif that was used to align the sequences: <code>*_pfm.txt</code></li>
 </ol>
-<p>###Usage Use the glm_poisson.methylation.R script to run MethylChIP:</p>
-<pre><code>Rscript glm_poisson.methylation.R &lt;experimentName&gt; &lt;flankingSequenceLength&gt; &lt;inputFolder&gt; &lt;outputFolder&gt;</code></pre>
-<p><strong>Inputs:</strong></p>
-<p><code>&lt;experimentName&gt;</code>: The ChIP-seq experiment label, e.g. <code>CTCF_rep2</code>.</p>
-<p><code>&lt;flankingSequenceLength&gt;</code>: The number of base pairs around the core motif that will be included in the model.</p>
-<p><code>&lt;inputFolder&gt;</code>: The path to the folder that contains the required files.</p>
-<p><code>&lt;outputFolder&gt;</code>: The path to the folder that will contain the output files. If it does not exist, this folder will be created automatically.</p>
 </div>
-</div>
-<div id="output" class="section level2">
-<h2>Output</h2>
-<p>MethylChIP outputs the following files in the <code>&lt;outputFolder&gt;/&lt;experimentName&gt;</code> folder:</p>
-<ul>
-<li><p><code>log.txt</code> – Text file containing messages produced by the script</p></li>
-<li><p><code>methylation_stats.pdf</code> – PDF file summarizing the frequency of methylation at different positions of the sequences. The statistics are presented for CpG’s, non-CpG methylation events, and all methylation events combined.</p></li>
-<li><p><code>methylation_correlation_with_binding</code> – PDF file summarizing the correlation of methylation at each position with the strength of TF binding. The statistics are presented for CpG’s, non-CpG methylation events, and all methylation events combined. Note that since methylation events are locally correlated with each other, interpretation of these graphs can be difficult.</p></li>
-<li><p><code>mCpG_only_model.coefficients.txt</code> – Text file containing the coefficients of a Poisson regression model that jointly considers DNA sequence and methylation at CpG sites to explain ChIP-seq tag counts.</p></li>
-<li><p><code>mCpG_only_model.motif_logo.pdf</code> – PDF file containing a graphical representation of the above model. The PDF essentially contains a motif logo (after scaling each position to have an average of zero), plus arrows that represent the effect of methylation: blue arrows represent methylation on the positive strand, and light brown arrows represent methylation on the reverse strand; upward arrows indicate positive and statistically significant effect on binding, and downward arrows represent negative and significant effect on binding.</p></li>
-<li><p><code>mCpG_only_model.motif_scaled.txt</code> – Text file containing the exact values shown in the above PDF. Non-significant methylation effects are represented by NA’s.</p></li>
-<li><p><code>mCpG_only_model.scatterplot.jpg</code> – A JPEG file showing the scatterplot of predicted vs. observed logarithm of tag density.</p></li>
-<li><p><code>All_mC_only_model.coefficients.txt</code> – Text file containing the coefficients of a Poisson regression model that jointly considers DNA sequence and all methylation events (including CpG and non-CpG sites) to explain ChIP-seq tag counts.</p></li>
-<li><p><code>All_mC_only_model.motif_logo.pdf</code> – PDF file containing a graphical representation of the above model.</p></li>
-<li><p><code>All_mC_only_model.motif_scaled.txt</code> – Text file containing the exact values shown in the above PDF.</p></li>
-<li><p><code>All_mC_only_model.scatterplot.jpg</code> – A JPEG file showing the scatterplot of predicted vs. observed logarithm of tag density.</p></li>
-<li><p><code>Merged_model.motif_logo.pdf</code> – PDF file containing a graphical representation of the methylation associations that are statistically significant (and in the same direction) in both the CpG and all-C models.</p></li>
-<li><p><code>Merged_model.motif_scaled.txt</code> – Text file containing the exact values shown in the above PDF.</p></li>
-</ul>
+<div id="running-jams-task-glm" class="section level3">
+<h3>Running JAMS’ task: <code>GLM</code></h3>
+<p>To build a JAMS model with the <code>GLM</code> task you need to specify the directory with the files created in the <code>DATA</code> task.</p>
+<p>For example:</p>
+<pre><code>./JAMS --task GLM \
+       --experiment ${EXPERIMENT_ID} \
+       --flanking {FLANKING} \
+       --data_dir ${DATA_DIR} \
+       --output_dir ${OUT_DIR}</code></pre>
+<p>The script <code>03_JAMS_demo_GLM.sh</code> is an example of the <code>GLM</code> task. Before, running extract the input files with:</p>
+<pre><code>gunzip ./data/CTCF_demo/02_formatted_data/small_demo/*.gz
+bash 03_JAMS_demo_GLM.sh</code></pre>
 </div>
 </div>
 

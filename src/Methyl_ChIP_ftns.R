@@ -2118,7 +2118,6 @@ heatmap_meth_affinity <- function( all_dat = all_dat,
   coefs_summary <- as.data.frame( fit_object$coefs_summary )
   
   # ## Example comment in deployment
-  # in_path <- "/home/ahcorcha/repos/MethylChIP_out/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_methylation_flank_20/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_mCpG_only_model_coefficients.txt"
   # coefs_summary <- read.csv( file = in_path, sep = "\t" )
   # rownames( coefs_summary ) <- coefs_summary$X
   # coefs_summary <- coefs_summary[, 2:5]
