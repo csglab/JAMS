@@ -428,8 +428,65 @@ write.sequence.model.av.met <- function( seq_fit, outdir, label ) {
   
   return( list( motif_control = motif_control, 
                 motif_pulldown = motif_pulldown ) )
+  }
+
+
+write.TF.background.coeffs.sep <- function( seq_fit, outdir, label ) {
   
+  # seq_fit <- fit_CpG_only
+  coefs <- seq_fit$coefs_summary
+  
+  ## In case there are missing values in the coefs matrix, add them back
+  coefs <- fix.coefs( coefs, seq_fit$fit$coefficients )
+  
+  ## Calculate the FDR for each coefficient
+  coefs <- cbind( coefs, p.adjust( coefs[,4], method = "fdr" ) )
+  colnames(coefs)[5] <- "FDR" # add the FDR to the matrix
+
+  
+  original_coeffs <- as.data.frame( coefs )
+  original_coeffs$Coefficient_name <- rownames( original_coeffs )
+  original_coeffs$Predictor <- original_coeffs$Coefficient_name
+  
+  
+  original_coeffs[grepl(pattern="^acc.*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "DNA_accessibility"
+  original_coeffs[grepl(pattern="^x\\..*\\.pos\\..*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Motif_Sequence"
+  original_coeffs[grepl(pattern="^x\\.CG\\.pos\\..*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Motif_CpG_state"
+  original_coeffs[grepl(pattern="^x\\.Met\\.pos\\..*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Motif_methylation"
+  
+  original_coeffs[grepl(pattern="^x\\..*_up.*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Upstream_base_composition"
+  original_coeffs[grepl(pattern="^x\\.M_up.*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Upstream_methylation_composition"
+  original_coeffs[grepl(pattern="^x\\.W_up.*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Upstream_methylation_composition"
+  
+  original_coeffs[grepl(pattern="^x\\..*_down.*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Downstream_base_composition"
+  original_coeffs[grepl(pattern="^x\\.M_down.*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Downstream_methylation_composition"
+  original_coeffs[grepl(pattern="^x\\.W_down.*$", x=original_coeffs$Coefficient_name), "Predictor" ] <- "Downstream_methylation_composition"
+  
+  
+  original_coeffs <- original_coeffs[ !original_coeffs$Coefficient_name %in% c("(Intercept)", "t"), ]
+  
+  original_coeffs <- original_coeffs[,c( "Predictor", "Coefficient_name", 
+                                         "Estimate", "Std..Error", "z.value", 
+                                         "Pr...z..", "FDR" )]
+  
+  background_coeffs <- original_coeffs[ !grepl( pattern = "^.*:t$", x = original_coeffs$Coefficient_name ), ]
+  
+  TF_binding_coeffs <- original_coeffs[ grepl( pattern = "^.*:t$", x = original_coeffs$Coefficient_name ), ]
+  
+  TF_binding_coeffs$Coefficient_name <- gsub( pattern = ":t$", replacement = "", x = TF_binding_coeffs$Coefficient_name )
+  
+  
+  write.table( x = TF_binding_coeffs, 
+             file = paste0( outdir, "/", label, "_TF_binding.txt"), 
+             sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE )
+  
+  write.table( x = background_coeffs, 
+             file = paste0( outdir, "/", label, "_background.txt"), 
+             sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE )
 }
+
+
+## asfljnasljf
 
 draw.motif.original.av.meth <- function( coefs, motif, outdir, label ) {
   
@@ -1115,11 +1172,11 @@ plot_dna_acc_coefficients <- function(fit_model, plot_name){
   
   dna_coefs <- coefs[ grepl( pattern = "acc", x = rownames( coefs ) ), ]
   
-  dna_coefs_ctrl <- dna_coefs[ grepl( pattern = ":t", x = rownames( dna_coefs ) ), ]
+  dna_coefs_ctrl <- dna_coefs[ ! grepl( pattern = ":t", x = rownames( dna_coefs ) ), ]
   dna_coefs_ctrl$Name <- rownames( dna_coefs_ctrl )
   dna_coefs_ctrl$Name <- gsub( "_", "\\.", dna_coefs_ctrl$Name )
   
-  dna_coefs_pdwn <- dna_coefs[ ! grepl( pattern = ":t", x = rownames( dna_coefs ) ), ]
+  dna_coefs_pdwn <- dna_coefs[ grepl( pattern = ":t", x = rownames( dna_coefs ) ), ]
   dna_coefs_pdwn$Name <- rownames( dna_coefs_pdwn )
   dna_coefs_pdwn$Name <- gsub( "_", "\\.", dna_coefs_pdwn$Name )
   
@@ -1438,6 +1495,11 @@ predict_new_cell_line <- function( seq = seq, CpGs = CpGs, methyl = methyl, nonm
 
 
 
+## ahcorcha
+
+
+
+
 #################################################################################
 
 
@@ -1449,7 +1511,7 @@ load_data <- function(input_root){
 
   ###################################################################### #
   ## Read PWM.
-  fileName <- list.files(path=input_root, pattern="*_pfm.txt", full.names = T)
+  fileName <- list.files(path=input_root, pattern="*pfm.txt", full.names = T)
   rcade_pfm <- fread(fileName, sep="\t", data.table = F, header = T, skip="Pos")
   
   pfm_length <- max(rcade_pfm$Pos)
@@ -2180,7 +2242,7 @@ heatmap_meth_affinity <- function( all_dat = all_dat,
     CG_fit_path <- paste0( outdir, "/", experiment_name, "_CG_fit.rda" )
     save( fit.CG, file = CG_fit_path )
     
-  }
+    }
   }
 
 

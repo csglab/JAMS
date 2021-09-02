@@ -23,7 +23,7 @@ GEN_FA=${FILE_DIR}/genome.fa
 
 ./JAMS --task DATA \
        --experiment ${EXPERIMENT_ID} \
-       --peaks ${PEAKS} \
+       --region ${PEAKS} \
        --wgbs_met_data ${METH} \
        --wgbs_unmet_data ${UNMETH} \
        --dna_acc_map ${DNA_ACC} \

@@ -87,7 +87,6 @@ def read_peaks(peak_path):
     return peaks
 
 
-
 def read_encode(encode_path):
     peaks = [ ]
     with open(encode_path, "r") as peak_line: 
@@ -120,3 +119,28 @@ def out_of_chrom(peak, chr_sizes):
     except KeyError as e:
         return False
 
+
+def read_bed(peak_path):
+    peaks = []
+    
+    with open(peak_path, "r") as peak_line: 
+        for peak in peak_line:
+
+            if peak[0] == "#": # Skip comments
+                continue
+
+            peak = read_line(peak)
+
+            if len(peak) == 1 or peak[0] == "chr":
+                continue
+            
+            peak[0] = str( peak[0] )
+            peak[1] = int( peak[1] )
+            peak[2] = int( peak[2] )
+            peak[3] = str( peak[3] )
+            peak[4] = str( peak[4] )
+            peak[5] = str( peak[5] )
+            peak = peak[0:6]
+            peaks.append(peak)
+
+    return peaks

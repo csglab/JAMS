@@ -11,25 +11,25 @@ suppressPackageStartupMessages(require(MASS))
 suppressPackageStartupMessages(require(patchwork))
 
 options( error = traceback, nwarnings = 10000 )
-source( paste0( "/home/ahcorcha/repos/tools/JAMS/src/Methyl_ChIP_ftns.R") ) 
+source( "./src/Methyl_ChIP_ftns.R" )
 
 ############################################################################## #
 ################################ Read I/O. ################################### #
 ################################################################################
 option_list = list(
   make_option(c("-e", "--experiment"), type="character",
-              default="CTCF_HEK293_GSM2026781_small",
+              default="CTCF_HEK293_GSM2026781_smallest_in_R",
               help="Experiment ID", metavar="character"),
 
   make_option(c("-f", "--flanking"), type="integer", default=20,
               help="length of flanking sequence around the motif", metavar="character"),
 
   make_option(c("-i", "--input_dir"), type="character", metavar="character",
-              default="./data/CTCF_demo/mid",
+              default="./data/CTCF_demo/02_formatted_data/smallest_demo",
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-o", "--output_dir"), type="character",
-              default="./data/CTCF_demo/out",
+              default="./data/CTCF_demo/03_output",
               help="", metavar="character") );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -267,6 +267,21 @@ if ( !dir.exists(opt$input_dir) ){
     
     ## Save model
     save(fit_CpG_only, file = paste0(outdir, "/", opt$experiment, "_fit_CpG_only_model.rda"))
+    
+    
+    
+    
+    
+    # source( "./src/Methyl_ChIP_ftns.R" )
+    
+    paste0( outdir, "/", label, "_coefficients_with_FDR.txt")
+    
+    write.TF.background.coeffs.sep( fit_CpG_only, outdir, label )
+     
+    write.table( x =  coefs, file = paste0( outdir, "/", label, "_coefficients_with_FDR.txt"),
+                 quote = FALSE, sep = "\t", row.names = TRUE, col.names = TRUE )
+    
+    
     
     
     #######################################################################################################  ###

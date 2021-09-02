@@ -1,7 +1,7 @@
 from . import my_utils
 import os
 
-def pre_methyl_chip(args):
+def extract_data(args):
     """
     """
     MC_INPUT_DIR = args.IN_PATH
@@ -12,51 +12,73 @@ def pre_methyl_chip(args):
     # Remove dir from previous run.
     # my_utils.run_cmd("rm -R %s" % (MC_INPUT_DIR))
     my_utils.run_cmd("mkdir -p %s" % (MC_INPUT_DIR))
-    ## Copy PFM to input directory.
-    my_utils.run_cmd("cp %s %s_pfm.txt" % \
-                     (args.PFM, out_prefix))
-    
+
+    # Copy PFM to input directory.
+    if args.PFM != "None":
+        my_utils.run_cmd( "cp %s %s" % \
+                          (args.PFM, MC_INPUT_DIR))
+
     ## 01. Create summit files
-    write_summit_and_score_beds(out_prefix, args.PEAKS, \
-                                MC_INPUT_DIR, args.CHR_SIZES, \
-                                args.REPEATS, args.RANGE)
+    if "BUILD" in args.TASK:
+    
+        write_summit_and_score_beds(out_prefix, args.PEAKS, \
+                                    MC_INPUT_DIR, args.CHR_SIZES, \
+                                    args.REPEATS, args.RANGE, args)
+    elif "PREDICT" in args.TASK:
+        
+        ## Get motif length
+        pfm_length = int(get_PFM_length_from_model(args.COEFFS))
 
+        if "SEARCH" == args.MOTIF_IN_REGIONS:
+            ## write bed and summit vRepeat files with
+            ##  the same coordinates
+            write_summit_and_score_beds_predt(out_prefix, \
+                                              args.PEAKS, \
+                                              args.CHR_SIZES)
+    
     ##### 03.Extract sequence for summits
-    print("Retrieving summit sequences ... ")
-    get_fasta_file(args.GENOME, out_prefix)
+    if "START" != args.MOTIF_IN_REGIONS:
+        print("Retrieving summit sequences ... ")
+        get_fasta_file(args.GENOME, out_prefix)
 
-    ##### 04. Run Affimx
-    print("Running AffiMx ... ")
-    # From task 3
-    fasta_path= "%s_summits_vRepeats.fa" % (out_prefix)
-    affimx_prefix = out_prefix + "_affimx"
-    affimx_cmd = "%s/AffiMx -pwm %s -fasta %s -out %s > %s.log" % \
-        (os.path.dirname(os.path.realpath(__file__)), \
-         args.PFM, fasta_path, affimx_prefix, affimx_prefix)
-
-    my_utils.run_cmd(affimx_cmd)
-
-    ##### 05. write_aligned_positions_bed
-    # Output from Affimx
-    affimx_position_path = "%s.position.txt" % (affimx_prefix)
-
-    #  Create the BED file of aligned genomic coordinates
     aligned_positions_bed = "%s_aligned_positions.bed" % (out_prefix)
-    write_aligned_positions_bed(affimx_position_path, \
-                                aligned_positions_bed)
+    
+    if ( "BUILD" in args.TASK ) or \
+       ( "PREDICT" in args.TASK and \
+         "SEARCH" == args.MOTIF_IN_REGIONS ):
+        
+        ##### 04. Run Affimx
+        print("Running AffiMx ... ")
+        # From task 3
+        fasta_path= "%s_summits_vRepeats.fa" % (out_prefix)
+        affimx_prefix = out_prefix + "_affimx"
+        affimx_cmd = "%s/AffiMx -pwm %s -fasta %s -out %s > %s.log" % \
+            (os.path.dirname(os.path.realpath(__file__)), \
+             args.PFM, fasta_path, affimx_prefix, affimx_prefix)
 
-    ##### 10. Extract tags from control and pulldown bams
-    extract_tags_ctrl_pd(out_prefix,
-                         args.BAM_CONTROL,
-                         args.BAM_PULLDOWN,
-                         args.TAG_SUMMIT_RANGE)
+        my_utils.run_cmd(affimx_cmd)
 
+        ##### 05. write_aligned_positions_bed
+        # Output from Affimx
+        affimx_position_path = "%s.position.txt" % (affimx_prefix)
+                
+        #  Create the BED file of aligned genomic coordinates
+        write_aligned_positions_bed(affimx_position_path, \
+                                    aligned_positions_bed)
+
+    elif( "PREDICT" in args.TASK and \
+          "START" == args.MOTIF_IN_REGIONS ):
+        write_aligned_pos_bed_n_txt(out_prefix, args.PEAKS, args.CHR_SIZES)
+        ## write aligned file
+        pass
+    
     
     ##### 06.write aligned fasta
     aligned_fasta = out_prefix + "_aligned_sequences.txt"
     write_aligned_fasta(aligned_positions_bed, \
                         aligned_fasta, args.GENOME, \
                         args.CHR_SIZES, args.RANGE)
+    
     ##### 07.write aligned numeric tab
     aligned_numeric = out_prefix + "_aligned_sequences_numeric_mx.txt"
     aligned_tab = out_prefix + "_aligned_sequences_tabulated_mx.txt"
@@ -76,7 +98,17 @@ def pre_methyl_chip(args):
     dna_acc = out_prefix + "_aligned_sequences.fasta.accessibility"
     get_dna_acc(aligned_positions_bed, args.DNA_ACC, dna_acc)
 
+    
+    if "BUILD" in args.TASK:
+        ##### 10. Extract tags from control and pulldown bams
+        extract_tags_ctrl_pd(out_prefix,
+                             args.BAM_CONTROL,
+                             args.BAM_PULLDOWN,
+                             args.TAG_SUMMIT_RANGE)
 
+    my_utils.remove_tmp_files(args.IN_PATH)
+
+    
 def run_methyl_chip(args):
 
     MC_INPUT_DIR = args.IN_PATH
@@ -94,15 +126,16 @@ def run_methyl_chip(args):
 
 
 def write_summit_and_score_beds(out_prefix, peaks, out_path,
-                                chr_sizes, repeats, this_range):
+                                chr_sizes, repeats, this_range, args):
     """
     Task 1
     """
     # Input: peaks
     # Temporary files.
     formated_peaks_tmp = "%s_T1_F1_formated_summit_peaks.tmp" % (out_prefix)
-    no_repeats_bed_tmp = "%s_T1_F2_formated_summit_peaks_no_repeats.tmp" % (out_prefix)
-
+    no_repeats_bed_tmp = "%s_T1_F2_formated_summit_peaks_no_repeats.tmp" % \
+        (out_prefix)
+    
     # Output files.
     summit_path = "%s_summits_vRepeats.bed" % (out_prefix)
     score_path = "%s_summits_vRepeats_scores.txt" % (out_prefix)
@@ -142,9 +175,10 @@ def write_summit_and_score_beds(out_prefix, peaks, out_path,
 
     ## Mask peaks over repeat (or blacklisted) regions
     mask_bed_cmd = "bedtools intersect -v -a %s -b %s > %s" \
-      % (formated_peaks_tmp, repeats, no_repeats_bed_tmp)
+        % (formated_peaks_tmp, repeats, no_repeats_bed_tmp)
     my_utils.run_cmd(mask_bed_cmd)
 
+    
     with open(no_repeats_bed_tmp, "r") as no_repeats_bed_f, \
          open(summit_path, "w") as summit_f, \
          open(score_path, "w") as score_f:
@@ -168,6 +202,7 @@ def write_summit_and_score_beds(out_prefix, peaks, out_path,
             # chr1:15120-15904::chr1:15521-15721  5.51  39  785  63.7
             score_line = "%s\t%s\t%s\t%s\t%s" % \
                          (peak[3], peak[7], peak[4], peak[5], peak[6])
+            
             print(score_line, end="\n", file=score_f)
 
 
@@ -191,7 +226,7 @@ def get_fasta_file(genome, out_prefix):
 
             new_name = "%s::%s:%s-%s" \
                        % (peak[3], peak[0], peak[1], peak[2])
-            new_line = [peak[0], peak[1], peak[2], new_name, peak[4]]
+            new_line = [peak[0], peak[1], peak[2], new_name]
             new_line = "\t".join(new_line)
             print(new_line, end="\n", file=tmp_bed_f)
     
@@ -452,3 +487,113 @@ def extract_tags_ctrl_pd(out_prefix, bam_control,
                   str(peak_score_line[4]), str(peak_tags_line[-2]),
                   str(peak_tags_line[-1]),
                   file=score_out_f, sep="\t")
+
+
+def get_PFM_length_from_model(coeff_file):
+    """
+    """
+    with open(coeff_file, 'r') as file: 
+        coeff_string = file.read().replace('\n', '')
+        occurrences = coeff_string.count("Motif_CpG_state")
+    return(occurrences)
+
+def write_summit_and_score_beds_predt(out_prefix, peaks, chr_sizes):
+    """
+    """
+    # Output files.
+    summit_path = "%s_summits_vRepeats.bed" % (out_prefix)
+    score_path = "%s_summits_vRepeats_scores.txt" % (out_prefix)
+
+    with open(summit_path, "w") as summit_f, \
+         open(score_path, "w") as score_f:
+
+        # Write header to summit file
+        header = "Name\tscore\tstrand"
+        print(header, end="\n", file=score_f)
+
+        
+        for peak in peaks:
+            # print(peak)
+            chrom = peak[0]
+            start = peak[1]
+            stop = peak[2]
+            name = peak[3]
+            score = peak[4]
+            strand = peak[5]
+            
+            new_name = "%s:%s-%s" % (chrom, start, stop)
+            both_names = "%s::%s" % (new_name, new_name)
+            
+            ## vRepeats.bed
+            summit_line = [str(chrom), str(start), str(stop),
+                           str(new_name), str(score), str(strand)]
+
+            score_line = [str(both_names), str(score), str(strand) ]
+
+
+            # Check if peak stop is outside chromosome
+            if my_utils.out_of_chrom(summit_line, chr_sizes):
+                continue
+
+            ## Write 
+            summit_line = "\t".join(summit_line)
+            print(summit_line, end="\n", file=summit_f)
+
+            score_line = "\t".join(score_line)
+            print(score_line, end="\n", file=score_f)
+
+            
+def write_aligned_pos_bed_n_txt(out_prefix, peaks, chr_sizes):
+    """
+    """
+    # Output files.
+    score_path = "%s_summits_vRepeats_scores.txt" % (out_prefix)
+    affimx_path = "%s.affimx.affinity.txt" % (out_prefix)
+    aligned_path = "%s_aligned_positions.bed" % (out_prefix)
+
+    with open(score_path, "w") as score_f, \
+         open(affimx_path, "w") as affimx_f, \
+         open(aligned_path, "w") as aligned_f:
+
+        print("Name\tscore\tstrand", end="\n", file=score_f)
+        print("Name\tPlaceholder", end="\n", file=affimx_f)
+
+        for peak in peaks:
+            # print(peak)
+            chrom = peak[0]
+            start = peak[1]
+            stop = peak[2]
+            name = peak[3]
+            score = peak[4]
+            strand = peak[5]
+
+            old_name = "%s:%s-%s" % (chrom, start, stop)
+            new_name = "%s:%s-%s" % (chrom, start, start+1)
+            both_names = "%s::%s" % (new_name, old_name)
+            
+            ## Fake coordinate to check if site is not close to end of chr
+            test_line = [str(chrom), str(start), str(start+50)]
+            ## Scores
+            score_line = [str(both_names), str(score), str(strand) ]
+            ## aligned
+            aligned_line = [str(chrom), str(start), str(start+1), str(both_names),\
+                            "0", str(strand)]
+            ## Affimx
+            affimx_line = [str(both_names), str("NA") ]
+
+            # Check if peak stop is outside chromosome
+            if my_utils.out_of_chrom(test_line, chr_sizes):
+                continue
+
+            score_line = "\t".join(score_line)
+            print(score_line, end="\n", file=score_f)
+
+            aligned_line = "\t".join(aligned_line)
+            print(aligned_line, end="\n", file=aligned_f)
+
+            affimx_line = "\t".join(affimx_line)
+            print(affimx_line, end="\n", file=affimx_f)
+        
+        pass
+    
+    
