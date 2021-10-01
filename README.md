@@ -6,25 +6,24 @@ JAMS creates models for inferring the effect of CpG methylation on TF binding in
 
 JAMS has three main tasks (`DATA`, `GLM`, and `PREDICT`). Briefly, `DATA` extracts the information required to build the JAMS model from BAM and BIGWIG files and creates a directory with the files required by `GLM`. `GLM` builds a generalized linear model as described in the Method section of JAMS' [preprint](https://doi.org/10.1101/2021.08.27.457995). `PREDICT` predicts TF or background binding signal specified by a  BED file, it can either predict on the first position of each genomic region or look for the best motif match. 
 
-### Requirements: 
+#### **Requirements:** 
 
-- Unix-compatible OS  
-- R version 3.0.1 or later [Download](http://www.r-project.org/)  
-- R libraries: data.table, ggplot2, ggseqlogo, ggforce, gridExtra, ggpubr, optparse, ComplexHeatmap, circlize, MASS, and patchwork  
-- Python version 3.6.0 or later  
-- [bwtool](https://github.com/CRG-Barcelona/bwtool)  
-- [bedtools](https://bedtools.readthedocs.io/en/latest/index.html)
+- Unix-compatible OS.  
+- [R version 3.0.1](http://www.r-project.org/) or later.  
+- R libraries: [data.table](https://www.rdocumentation.org/packages/data.table/versions/1.14.2), [ggplot2](https://www.rdocumentation.org/packages/ggplot2/versions/3.3.5), [ggseqlogo](https://github.com/omarwagih/ggseqlogo), [ggforce](https://www.rdocumentation.org/packages/ggforce/versions/0.3.3), [gridExtra](https://rdrr.io/cran/gridExtra/), [ggpubr](https://www.rdocumentation.org/packages/ggpubr/versions/0.4.0), [optparse](https://www.rdocumentation.org/packages/optparse/versions/1.6.6), [ComplexHeatmap](https://bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html), [circlize](https://jokergoo.github.io/circlize/), [MASS](https://rdrr.io/cran/MASS/), and [patchwork](https://www.rdocumentation.org/packages/patchwork/versions/1.1.1).  
+- [Python version 3.6.0](https://www.python.org/downloads/) or later.  
+- [bwtool](https://github.com/CRG-Barcelona/bwtool) (requires [libbeato](https://github.com/CRG-Barcelona/libbeato), which has a compilation issue, a workaround can be found [here](https://github.com/CRG-Barcelona/libbeato/issues/6)).  
+- [bedtools](https://bedtools.readthedocs.io/en/latest/index.html).
 
 No installation is require for this version.  
 
-#### Usage:  
+#### **Usage:**  
 
-Input files can be downloaded from Figshare with the command:
+Input files can be downloaded with `wget`:
 
 ```bash
-mkdir ./data/CTCF_demo/01_input_files
-cd ./data/CTCF_demo/01_input_files
-wget <Figshare link>
+cd ./data/CTCF_demo/01_input_files/
+bash download_HEK293_CTCF_demo_data.sh
 ```
 
 `01_JAMS_demo.sh` contains an example of JAMS for CTCF in HEK293 (tasks `DATA` and `PREDICT` in the run). This should create a `./data/CTCF_demo/03_output/JAMS_CTCF_HEK293_GSM2026781_small_flanking_20bps` folder.
@@ -50,9 +49,9 @@ For example:
        --output_dir ${OUT_DIR}
 ```
 
-### ARGUMENTS:  
+#### **ARGUMENTS:**  
 
-#### Input files: 
+##### **Input files:** 
 
 - `--peaks <PEAKS>`
 
@@ -94,7 +93,7 @@ Chromosome sizes.
 
 Genomic regions to be masked (repeats or/and blacklisted regions).
 
-#### Input and output directories:
+#### **Input and output directories:**
 
 - `--data_dir <DATA_DIR>`
 
@@ -104,7 +103,7 @@ The path to the folder that contains the required files to build the JAMS model.
 
 The path to the folder that will contain the output files.
 
-#### Other Arguments:
+#### **Other Arguments:**
 
 - `--experiment <EXPERIMENT_ID>`
 
@@ -119,7 +118,7 @@ Range from the best motif match where the read tags will be extracted. Default= 
 The number of base pairs around the core motif that will be included in the model.
 
 
-**Output:**
+#### **Output:**
 
 An example of JAMS' output is provided as `./data/CTCF_demo/03_output/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_neg_binomial_CpG_av_Met_methylation_flank_20.tar.gz`.Next we describe the output files.
 
@@ -151,7 +150,7 @@ JAMS outputs the following files in the `<OUT_DIR>/<EXPERIMENT_ID>_flanking_<FLA
 - `<experimentName>_motif_pulldown.rda`	–
 --> 
 
-### Task: `DATA`
+### **Task:** `DATA`
 
 Only extracting data in and around the best motif match in ChIP-seq peaks. 
 
@@ -185,7 +184,7 @@ This creates the input files to build the JAMS model:
 7. PFM file for the motif that was used to align the sequences: `*_pfm.txt`
 
 
-### Task: `GLM`
+### **Task:** `GLM`
 
 To build a JAMS model with the `GLM` task you need to specify the directory with the files created in the `DATA` task. 
 
@@ -206,7 +205,7 @@ gunzip ./data/CTCF_demo/02_formatted_data/small_demo/*.gz
 bash 03_JAMS_demo_GLM.sh
 ```
 
-### Task: `Predict`
+### **Task:** `Predict`
 
 Predict TF or background signal on user specified genomic regions (BED format). It can either predict binding of the first position of each region (--motif_in_regions START) or look for the best motif match (--motif_in_regions SEARCH, if a PFM is provided). 260 high quality pretrain TF models are provided in `./data/JAMS_models/representative_JAMS_models.tar.gz`. `*_TF_binding.txt` and `*_background.txt` files can be used with the `--model_coeficients` argument.
 
@@ -227,7 +226,7 @@ For example:
 
 The script `04_JAMS_demo_predict.sh` is an example of the `PREDICT` task. 
 
-### Citation:
+#### **Citation:**
 Hernandez-Corchado, A., & Najafabadi, H. S. (2021). A base-resolution panorama of the in vivo impact of cytosine methylation on transcription factor binding. BioRxiv. https://doi.org/10.1101/2021.08.27.457995
 
 

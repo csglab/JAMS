@@ -358,28 +358,28 @@ pre code {
 <p>JAMS creates models for inferring the effect of CpG methylation on TF binding in vivo. It creates quantitative models that connect the strength of the binding signal observed in ChIP-seq to the DNA accessibility of the binding site, regional methylation level, DNA sequence, and base-resolution cytosine methylation.</p>
 <p>JAMS has three main tasks (<code>DATA</code>, <code>GLM</code>, and <code>PREDICT</code>). Briefly, <code>DATA</code> extracts the information required to build the JAMS model from BAM and BIGWIG files and creates a directory with the files required by <code>GLM</code>. <code>GLM</code> builds a generalized linear model as described in the Method section of JAMS’ <a href="https://doi.org/10.1101/2021.08.27.457995">preprint</a>. <code>PREDICT</code> predicts TF or background binding signal specified by a BED file, it can either predict on the first position of each genomic region or look for the best motif match.</p>
 </div>
-<div id="requirements" class="section level3">
-<h3>Requirements:</h3>
+<div id="requirements" class="section level4">
+<h4><strong>Requirements:</strong></h4>
 <ul>
-<li>Unix-compatible OS<br />
+<li>Unix-compatible OS.<br />
 </li>
-<li>R version 3.0.1 or later <a href="http://www.r-project.org/">Download</a><br />
+<li><a href="http://www.r-project.org/">R version 3.0.1</a> or later.<br />
 </li>
-<li>R libraries: data.table, ggplot2, ggseqlogo, ggforce, gridExtra, ggpubr, optparse, ComplexHeatmap, circlize, MASS, and patchwork<br />
+<li>R libraries: <a href="https://www.rdocumentation.org/packages/data.table/versions/1.14.2">data.table</a>, <a href="https://www.rdocumentation.org/packages/ggplot2/versions/3.3.5">ggplot2</a>, <a href="https://github.com/omarwagih/ggseqlogo">ggseqlogo</a>, <a href="https://www.rdocumentation.org/packages/ggforce/versions/0.3.3">ggforce</a>, <a href="https://rdrr.io/cran/gridExtra/">gridExtra</a>, <a href="https://www.rdocumentation.org/packages/ggpubr/versions/0.4.0">ggpubr</a>, <a href="https://www.rdocumentation.org/packages/optparse/versions/1.6.6">optparse</a>, <a href="https://bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html">ComplexHeatmap</a>, <a href="https://jokergoo.github.io/circlize/">circlize</a>, <a href="https://rdrr.io/cran/MASS/">MASS</a>, and <a href="https://www.rdocumentation.org/packages/patchwork/versions/1.1.1">patchwork</a>.<br />
 </li>
-<li>Python version 3.6.0 or later<br />
+<li><a href="https://www.python.org/downloads/">Python version 3.6.0</a> or later.<br />
 </li>
-<li><a href="https://github.com/CRG-Barcelona/bwtool">bwtool</a><br />
+<li><a href="https://github.com/CRG-Barcelona/bwtool">bwtool</a> (requires <a href="https://github.com/CRG-Barcelona/libbeato">libbeato</a>, which has a compilation issue, a workaround can be found <a href="https://github.com/CRG-Barcelona/libbeato/issues/6">here</a>).<br />
 </li>
-<li><a href="https://bedtools.readthedocs.io/en/latest/index.html">bedtools</a></li>
+<li><a href="https://bedtools.readthedocs.io/en/latest/index.html">bedtools</a>.</li>
 </ul>
 <p>No installation is require for this version.</p>
+</div>
 <div id="usage" class="section level4">
-<h4>Usage:</h4>
-<p>Input files can be downloaded from Figshare with the command:</p>
-<pre class="bash"><code>mkdir ./data/CTCF_demo/01_input_files
-cd ./data/CTCF_demo/01_input_files
-wget &lt;Figshare link&gt;</code></pre>
+<h4><strong>Usage:</strong></h4>
+<p>Input files can be downloaded with <code>wget</code>:</p>
+<pre class="bash"><code>cd ./data/CTCF_demo/01_input_files/
+bash download_HEK293_CTCF_demo_data.sh</code></pre>
 <p><code>01_JAMS_demo.sh</code> contains an example of JAMS for CTCF in HEK293 (tasks <code>DATA</code> and <code>PREDICT</code> in the run). This should create a <code>./data/CTCF_demo/03_output/JAMS_CTCF_HEK293_GSM2026781_small_flanking_20bps</code> folder.</p>
 <p>For example:</p>
 <pre class="bash"><code>./JAMS --task DATA,GLM \
@@ -399,11 +399,10 @@ wget &lt;Figshare link&gt;</code></pre>
        --flanking ${FLANKING} \
        --output_dir ${OUT_DIR}</code></pre>
 </div>
-</div>
-<div id="arguments" class="section level3">
-<h3>ARGUMENTS:</h3>
-<div id="input-files" class="section level4">
-<h4>Input files:</h4>
+<div id="arguments" class="section level4">
+<h4><strong>ARGUMENTS:</strong></h4>
+<div id="input-files" class="section level5">
+<h5><strong>Input files:</strong></h5>
 <ul>
 <li><code>--peaks &lt;PEAKS&gt;</code></li>
 </ul>
@@ -445,8 +444,9 @@ wget &lt;Figshare link&gt;</code></pre>
 </ul>
 <p>Genomic regions to be masked (repeats or/and blacklisted regions).</p>
 </div>
+</div>
 <div id="input-and-output-directories" class="section level4">
-<h4>Input and output directories:</h4>
+<h4><strong>Input and output directories:</strong></h4>
 <ul>
 <li><code>--data_dir &lt;DATA_DIR&gt;</code></li>
 </ul>
@@ -457,7 +457,7 @@ wget &lt;Figshare link&gt;</code></pre>
 <p>The path to the folder that will contain the output files.</p>
 </div>
 <div id="other-arguments" class="section level4">
-<h4>Other Arguments:</h4>
+<h4><strong>Other Arguments:</strong></h4>
 <ul>
 <li><code>--experiment &lt;EXPERIMENT_ID&gt;</code></li>
 </ul>
@@ -470,7 +470,9 @@ wget &lt;Figshare link&gt;</code></pre>
 <li><code>--flanking &lt;FLANKING&gt;</code></li>
 </ul>
 <p>The number of base pairs around the core motif that will be included in the model.</p>
-<p><strong>Output:</strong></p>
+</div>
+<div id="output" class="section level4">
+<h4><strong>Output:</strong></h4>
 <p>An example of JAMS’ output is provided as <code>./data/CTCF_demo/03_output/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_neg_binomial_CpG_av_Met_methylation_flank_20.tar.gz</code>.Next we describe the output files.</p>
 <p>JAMS outputs the following files in the <code>&lt;OUT_DIR&gt;/&lt;EXPERIMENT_ID&gt;_flanking_&lt;FLANKING&gt;bps</code> folder:</p>
 <ul>
@@ -500,9 +502,8 @@ wget &lt;Figshare link&gt;</code></pre>
 - `<experimentName>_motif_pulldown.rda` –
 -->
 </div>
-</div>
 <div id="task-data" class="section level3">
-<h3>Task: <code>DATA</code></h3>
+<h3><strong>Task:</strong> <code>DATA</code></h3>
 <p>Only extracting data in and around the best motif match in ChIP-seq peaks.</p>
 <p>An example is included in the <code>02_JAMS_demo_format_data.sh</code> script:</p>
 <pre class="bash"><code>./JAMS --task DATA \
@@ -531,7 +532,7 @@ wget &lt;Figshare link&gt;</code></pre>
 </ol>
 </div>
 <div id="task-glm" class="section level3">
-<h3>Task: <code>GLM</code></h3>
+<h3><strong>Task:</strong> <code>GLM</code></h3>
 <p>To build a JAMS model with the <code>GLM</code> task you need to specify the directory with the files created in the <code>DATA</code> task.</p>
 <p>For example:</p>
 <pre class="bash"><code>./JAMS --task GLM \
@@ -544,7 +545,7 @@ wget &lt;Figshare link&gt;</code></pre>
 bash 03_JAMS_demo_GLM.sh</code></pre>
 </div>
 <div id="task-predict" class="section level3">
-<h3>Task: <code>Predict</code></h3>
+<h3><strong>Task:</strong> <code>Predict</code></h3>
 <p>Predict TF or background signal on user specified genomic regions (BED format). It can either predict binding of the first position of each region (–motif_in_regions START) or look for the best motif match (–motif_in_regions SEARCH, if a PFM is provided). 260 high quality pretrain TF models are provided in <code>./data/JAMS_models/representative_JAMS_models.tar.gz</code>. <code>*_TF_binding.txt</code> and <code>*_background.txt</code> files can be used with the <code>--model_coeficients</code> argument.</p>
 <p>For example:</p>
 <pre class="bash"><code>./JAMS --task PREDICT \
@@ -558,10 +559,10 @@ bash 03_JAMS_demo_GLM.sh</code></pre>
        --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
        --chr_sizes ${CHR_SIZES} --pfm ${PFM}</code></pre>
 <p>The script <code>04_JAMS_demo_predict.sh</code> is an example of the <code>PREDICT</code> task.</p>
-</div>
-<div id="citation" class="section level3">
-<h3>Citation:</h3>
+<div id="citation" class="section level4">
+<h4><strong>Citation:</strong></h4>
 <p>Hernandez-Corchado, A., &amp; Najafabadi, H. S. (2021). A base-resolution panorama of the in vivo impact of cytosine methylation on transcription factor binding. BioRxiv. <a href="https://doi.org/10.1101/2021.08.27.457995" class="uri">https://doi.org/10.1101/2021.08.27.457995</a></p>
+</div>
 </div>
 </div>
 
