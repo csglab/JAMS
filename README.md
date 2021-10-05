@@ -33,7 +33,7 @@ For example:
 ```bash
 ./JAMS --task DATA,GLM \
        --experiment ${EXPERIMENT_ID} \
-       --peaks ${PEAKS} \
+       --region ${PEAKS} \
        --wgbs_met_data ${METH} \
        --wgbs_unmet_data ${UNMETH} \
        --dna_acc_map ${DNA_ACC} \
@@ -53,9 +53,9 @@ For example:
 
 ##### **Input files:** 
 
-- `--peaks <PEAKS>`
+- `--region <PEAKS>`
 
-Peaks from ChiP-seq experiment, output from MACS "*_peaks.xls".
+Peaks from ChiP-seq experiment, output from MACS "*_peaks.xls". When `predict` is used, the `--region` argument takes a bed files with columns as `chr\tstart\tend\tname\tscore\tstrand\n`
 
 - `--wgbs_met_data <METH>`
 
@@ -120,7 +120,7 @@ The number of base pairs around the core motif that will be included in the mode
 
 #### **Output:**
 
-An example of JAMS' output is provided as `./data/CTCF_demo/03_output/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_neg_binomial_CpG_av_Met_methylation_flank_20.tar.gz`.Next we describe the output files.
+An example of JAMS' output is provided as `./data/CTCF_demo/03_output/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_neg_binomial_CpG_av_Met_methylation_flank_20.tar.gz`. Next we describe the output files.
 
 JAMS outputs the following files in the `<OUT_DIR>/<EXPERIMENT_ID>_flanking_<FLANKING>bps` folder:
 
@@ -159,7 +159,7 @@ An example is included in the `02_JAMS_demo_format_data.sh` script:
 ```bash
 ./JAMS --task DATA \
        --experiment ${EXPERIMENT_ID} \
-       --peaks ${PEAKS} \
+       --region ${PEAKS} \
        --wgbs_met_data ${METH} \
        --wgbs_unmet_data ${UNMETH} \
        --dna_acc_map ${DNA_ACC} \
@@ -207,7 +207,7 @@ bash 03_JAMS_demo_GLM.sh
 
 ### **Task:** `Predict`
 
-Predict TF or background signal on user specified genomic regions (BED format). It can either predict binding of the first position of each region (--motif_in_regions START) or look for the best motif match (--motif_in_regions SEARCH, if a PFM is provided). 260 high quality pretrain TF models are provided in `./data/JAMS_models/representative_JAMS_models.tar.gz`. `*_TF_binding.txt` and `*_background.txt` files can be used with the `--model_coeficients` argument.
+Predict TF or background signal on user specified genomic regions (BED format). It can either predict binding of the first position of each region (`--motif_in_regions START`) or look for the best motif match (`--motif_in_regions SEARCH`, if a PFM is provided). 260 high quality pretrain TF models are provided in `./data/JAMS_models/representative_JAMS_models.tar.gz`. `*_TF_binding.txt` and `*_background.txt` files can be used with the `--model_coeficients` argument. When `predict` is used, the `--region` argument takes a bed files with columns as `chr\tstart\tend\tname\tscore\tstrand\n`. 
 
 For example:
 
@@ -224,7 +224,18 @@ For example:
        --chr_sizes ${CHR_SIZES} --pfm ${PFM}
 ```
 
-The script `04_JAMS_demo_predict.sh` is an example of the `PREDICT` task. 
+The script `04_JAMS_demo_predict.sh` is an example of the `PREDICT` task.  
+
+#### **Predict specific arguments:**  
+- `--predicted_binding_prefix` – Prefix for the output files. For example `/directory/prefix`.  
+- `--model_coeficients` – Coefficients created by `GLM` task, files ending with `*_TF_binding.txt` and `*_background.txt`.  
+- `--motif_in_regions` – `START` uses the first position of the bed file  to predict binding. `SEARCH`, searches for the best motif match if a PFM is provided.   
+- `--region` – takes a bed files with columns as `chr\tstart\tend\tname\tscore\tstrand\n`.   
+
+#### **Output:**
+- `<OUT_PREFIX>_predicted_binding_heatmap.pdf` – Heatmap with main predictors (DNA accessibility, motif sequence, and methylation) and predicted binding. Sorted by binding. If regions > 1000, the heatmap will contain 1000 regions randomly sampled.  
+- `<OUT_PREFIX>_predicted_binding_n_predictors.tab` – Region names with predictors and predicted binding.  
+- `<OUT_PREFIX>_predicted_binding.tab` – Region names with predicted binding.  
 
 #### **Citation:**
 Hernandez-Corchado, A., & Najafabadi, H. S. (2021). A base-resolution panorama of the in vivo impact of cytosine methylation on transcription factor binding. BioRxiv. https://doi.org/10.1101/2021.08.27.457995

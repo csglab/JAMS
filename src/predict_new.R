@@ -6,7 +6,9 @@ suppressPackageStartupMessages(require(circlize))
 
 options( error = traceback, nwarnings = 10000 )
 source(  "./src/Methyl_ChIP_ftns.R" )
+
 # setwd( "/home/ahcorcha/repos/tools/JAMS" )
+# source(  "./src/Methyl_ChIP_ftns.R" )
 
 option_list = list(
   make_option(c("-c", "--coeffs"), type="character",
@@ -14,7 +16,7 @@ option_list = list(
               help="original coefficients with FDR", metavar="character"),
 
   make_option(c("-i", "--input_dir"), type="character",
-              default="./data/CTCF_demo/04_predict/data_search",
+              default="./data/CTCF_demo/04_predict/data_CTCF_search",
               help="", metavar="character"),
   
     make_option(c("-f", "--flanking"), type="integer",
@@ -138,7 +140,7 @@ log_c_predicted$region <- rownames(X)
 # colnames(log_c_predicted) <- c( "region_name", "log_c" )
 
 write.table( x = log_c_predicted[,c( "region", "log_c_predicted")], 
-             file = paste0( opt$out_prefix, "_predicted_binding.txt" ), 
+             file = paste0( opt$out_prefix, "_predicted_binding.tab" ), 
              sep = "\t", quote = FALSE,
              row.names = FALSE, col.names = TRUE)
 
@@ -204,7 +206,7 @@ all_data_ht <- function( all_data = all_data, flanking = flanking, htmp_name = h
                                 max( all_data$log_c_predicted ) ),
                              c( "white", "red", "black" ) )
   
-  pdf( htmp_name, width = 15, height =  15 )
+  pdf( htmp_name, width = 15, height =  20 )
   ## sequence
   ht1 <- ComplexHeatmap::Heatmap( matrix = as.matrix( seqs ),
                                   column_title_rot = 0,
@@ -260,6 +262,10 @@ rownames(all_dat) <- all_dat$name
 write.table( x = all_dat, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE,
              file = paste0( opt$out_prefix, "_predicted_binding_n_predictors.tab" )
              )
+
+if ( nrow(all_dat) >= 1000){
+  all_dat <- all_dat[ sample(1:nrow(all_dat), 1000), ]
+  }
 
 htmp_name <- paste0( opt$out_prefix, "_predicted_binding_heatmap.pdf" )
 all_data_ht( all_data = all_dat, flanking = flanking, htmp_name = htmp_name )

@@ -384,7 +384,7 @@ bash download_HEK293_CTCF_demo_data.sh</code></pre>
 <p>For example:</p>
 <pre class="bash"><code>./JAMS --task DATA,GLM \
        --experiment ${EXPERIMENT_ID} \
-       --peaks ${PEAKS} \
+       --region ${PEAKS} \
        --wgbs_met_data ${METH} \
        --wgbs_unmet_data ${UNMETH} \
        --dna_acc_map ${DNA_ACC} \
@@ -404,7 +404,7 @@ bash download_HEK293_CTCF_demo_data.sh</code></pre>
 <div id="input-files" class="section level5">
 <h5><strong>Input files:</strong></h5>
 <ul>
-<li><code>--peaks &lt;PEAKS&gt;</code></li>
+<li><code>--region &lt;PEAKS&gt;</code></li>
 </ul>
 <p>Peaks from ChiP-seq experiment, output from MACS &quot;*_peaks.xls&quot;.</p>
 <ul>
@@ -473,7 +473,7 @@ bash download_HEK293_CTCF_demo_data.sh</code></pre>
 </div>
 <div id="output" class="section level4">
 <h4><strong>Output:</strong></h4>
-<p>An example of JAMS’ output is provided as <code>./data/CTCF_demo/03_output/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_neg_binomial_CpG_av_Met_methylation_flank_20.tar.gz</code>.Next we describe the output files.</p>
+<p>An example of JAMS’ output is provided as <code>./data/CTCF_demo/03_output/CTCF_HEK293_GSM2026781_hg38_from_motif_RANGE_400_neg_binomial_CpG_av_Met_methylation_flank_20.tar.gz</code>. Next we describe the output files.</p>
 <p>JAMS outputs the following files in the <code>&lt;OUT_DIR&gt;/&lt;EXPERIMENT_ID&gt;_flanking_&lt;FLANKING&gt;bps</code> folder:</p>
 <ul>
 <li><code>&lt;experimentName&gt;_log.txt</code> – Text file containing the logs of the GLM task.</li>
@@ -508,7 +508,7 @@ bash download_HEK293_CTCF_demo_data.sh</code></pre>
 <p>An example is included in the <code>02_JAMS_demo_format_data.sh</code> script:</p>
 <pre class="bash"><code>./JAMS --task DATA \
        --experiment ${EXPERIMENT_ID} \
-       --peaks ${PEAKS} \
+       --region ${PEAKS} \
        --wgbs_met_data ${METH} \
        --wgbs_unmet_data ${UNMETH} \
        --dna_acc_map ${DNA_ACC} \
@@ -546,7 +546,7 @@ bash 03_JAMS_demo_GLM.sh</code></pre>
 </div>
 <div id="task-predict" class="section level3">
 <h3><strong>Task:</strong> <code>Predict</code></h3>
-<p>Predict TF or background signal on user specified genomic regions (BED format). It can either predict binding of the first position of each region (–motif_in_regions START) or look for the best motif match (–motif_in_regions SEARCH, if a PFM is provided). 260 high quality pretrain TF models are provided in <code>./data/JAMS_models/representative_JAMS_models.tar.gz</code>. <code>*_TF_binding.txt</code> and <code>*_background.txt</code> files can be used with the <code>--model_coeficients</code> argument.</p>
+<p>Predict TF or background signal on user specified genomic regions (BED format). It can either predict binding of the first position of each region (<code>--motif_in_regions START</code>) or look for the best motif match (<code>--motif_in_regions SEARCH</code>, if a PFM is provided). 260 high quality pretrain TF models are provided in <code>./data/JAMS_models/representative_JAMS_models.tar.gz</code>. <code>*_TF_binding.txt</code> and <code>*_background.txt</code> files can be used with the <code>--model_coeficients</code> argument. When <code>predict</code> is used, the <code>--region</code> argument takes a bed files with columns as <code>chr\nstart\nend\nname\nscore\nstrand</code>.</p>
 <p>For example:</p>
 <pre class="bash"><code>./JAMS --task PREDICT \
        --motif_in_regions ${SEARCH_or_START} \
@@ -558,7 +558,12 @@ bash 03_JAMS_demo_GLM.sh</code></pre>
        --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
        --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
        --chr_sizes ${CHR_SIZES} --pfm ${PFM}</code></pre>
-<p>The script <code>04_JAMS_demo_predict.sh</code> is an example of the <code>PREDICT</code> task.</p>
+<p>The script <code>04_JAMS_demo_predict.sh</code> is an example of the <code>PREDICT</code> task. The output files:</p>
+<ul>
+<li><code>&lt;OUT_PREFIX&gt;_predicted_binding_heatmap.pdf</code> –</li>
+<li><code>&lt;OUT_PREFIX&gt;_predicted_binding_n_predictors.tab</code> –</li>
+<li><code>&lt;OUT_PREFIX&gt;_predicted_binding.txt</code> –</li>
+</ul>
 <div id="citation" class="section level4">
 <h4><strong>Citation:</strong></h4>
 <p>Hernandez-Corchado, A., &amp; Najafabadi, H. S. (2021). A base-resolution panorama of the in vivo impact of cytosine methylation on transcription factor binding. BioRxiv. <a href="https://doi.org/10.1101/2021.08.27.457995" class="uri">https://doi.org/10.1101/2021.08.27.457995</a></p>
