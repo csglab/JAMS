@@ -19,13 +19,12 @@ def extract_data(args):
                           (args.PFM, MC_INPUT_DIR))
 
     ## 01. Create summit files
-    if "BUILD" in args.TASK:
-    
+    if "BUILD" in args.TASK:    
         write_summit_and_score_beds(out_prefix, args.PEAKS, \
                                     MC_INPUT_DIR, args.CHR_SIZES, \
                                     args.REPEATS, args.RANGE, args)
-    elif "PREDICT" in args.TASK:
         
+    elif "PREDICT" in args.TASK:        
         ## Get motif length
         pfm_length = int(get_PFM_length_from_model(args.COEFFS))
 

@@ -1511,6 +1511,7 @@ load_data <- function(input_root){
 
   ###################################################################### #
   ## Read PWM.
+  # input_root <- opt$input_dir
   fileName <- list.files(path=input_root, pattern="*pfm.txt", full.names = T)
   rcade_pfm <- fread(fileName, sep="\t", data.table = F, header = T, skip="Pos")
   

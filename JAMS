@@ -45,7 +45,7 @@ parser.add_argument('--bam_pulldown', dest='BAM_PULLDOWN', action='store',
 parser.add_argument('--regions', dest='PEAKS',
                     action='store', default='None',
                     help='Peaks from ChiP-seq experiment, output from MACS "*_peaks.xls"')
-parser.add_argument('--pfm', dest='PFM',
+parser.add_argument('--pfm', dest='PFM', default = "None",
                     action='store', nargs="?",
                     help='Position frequency matrix, Transfac format')
 ## Methylation maps
@@ -76,6 +76,11 @@ parser.add_argument('--data_dir', dest='IN_PATH', action='store',
 parser.add_argument('--flanking', dest='FLANKING', action='store', \
                     default='20',
                     help='The number of base pairs around the core motif that will be included in the model.')
+# Flags
+## Motif discovery
+parser.add_argument('--motif_discovery', dest='SEARCH_MOTIF', action='store_const', \
+                    const=True, default=False, help='')
+
 
 args = parser.parse_args()
 TAGCUTOFF = 0 # Why?
@@ -96,7 +101,6 @@ def read_external_tools():
 if __name__ == '__main__':
 
     tools = read_external_tools()
-
     my_utils.run_cmd("mkdir -p %s" % ( args.OUT_PATH ))
     
     ## Copy peak file to input directory.
