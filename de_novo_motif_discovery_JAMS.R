@@ -1,21 +1,22 @@
-library(data.table)
-library(ggplot2)
-library(ggseqlogo)
-library(ggforce)
-library(gridExtra)
-library(ggpubr)
-library(optparse) 
-library(ComplexHeatmap)
-library(circlize)
-library(MASS)
-library(patchwork)
-library(cowplot)
-library(grid)
-library(reticulate)
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ggseqlogo))
+suppressPackageStartupMessages(library(ggforce))
+suppressPackageStartupMessages(library(gridExtra))
+suppressPackageStartupMessages(library(ggpubr))
+suppressPackageStartupMessages(library(optparse))
+suppressPackageStartupMessages(library(ComplexHeatmap))
+suppressPackageStartupMessages(library(circlize))
+suppressPackageStartupMessages(library(MASS))
+suppressPackageStartupMessages(library(patchwork))
+suppressPackageStartupMessages(library(cowplot))
+suppressPackageStartupMessages(library(grid))
+suppressPackageStartupMessages(library(reticulate))
 
-# setwd( "/home/ahcorcha/repos/tools/JAMS" )
-source( "./src/Methyl_ChIP_ftns.R" )
-source( "./src/de_novo_discovery_ftns.R" )
+# source( "./src/Methyl_ChIP_ftns.R" )
+# source( "./src/de_novo_discovery_ftns.R" )
+source( "/home/ahcorcha/tools/JAMS/src/Methyl_ChIP_ftns.R" )
+source( "/home/ahcorcha/tools/JAMS/src/de_novo_discovery_ftns.R" )
 options( error = traceback, nwarnings = 10000 )
 
 ######   IN and load data
@@ -60,9 +61,9 @@ prefix <- paste0( outdir, "/", experiment )
 
 sink( paste0( prefix, "_log.txt" ) )
 cat(paste0( experiment, "\n"))
-cat(paste0( "Start wall-time: ", Sys.time(), "\n"))
+cat(paste0( "Start wall time: ", Sys.time(), "\n"))
 
-
+cat("Loading data ...\n")
 dat_all <- load_dat( input_root, pfm_length = pfm_length )
 
 ################################################################################
@@ -88,6 +89,7 @@ possible_position <- ncol( dat_all$x.C.all ) - 2*flanking - pfm_length
 ## Pre compute position specific predictors 
 ### Create list of length upper_limit_pos, each entry is the dat_all for the 
 ### correspondent position.
+cat("Pre-calc. predictors per position ...\n")
 predictors_list <- pre_calc_by_pos_dat( this_dat_all = dat_all, 
                                         possible_position = possible_position, 
                                         flanking = flanking, 
@@ -98,6 +100,7 @@ rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 7500 ) )
 
 ######   Iteration
 ################################################################################
+cat(paste0( "Start iterations wall time: ", Sys.time(), "\n"))
 for (i in 1:as.integer(iterations)) {
   ### Starting iteration
   # i <- 1
@@ -241,6 +244,7 @@ write.csv( x = start_pos_list_df, row.names = FALSE,
            file = paste0( prefix, "_start_position_across_iterations.csv" ) )
 ################################################################################
 
+use warnings()
 
 cat(paste0( "End wall time: ", Sys.time(), "\n"))
 sink()

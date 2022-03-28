@@ -1,4 +1,5 @@
-source_python("./src/motif_discovery.py")
+# source_python( "/src/motif_discovery.py" )
+source_python( "/home/ahcorcha/tools/JAMS/src/motif_discovery.py" )
 
 #### Notes
 ###############################################################################
