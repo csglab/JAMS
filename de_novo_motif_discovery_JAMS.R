@@ -12,22 +12,18 @@ suppressPackageStartupMessages(library(patchwork))
 suppressPackageStartupMessages(library(cowplot))
 suppressPackageStartupMessages(library(grid))
 suppressPackageStartupMessages(library(reticulate))
-
-# source( "./src/Methyl_ChIP_ftns.R" )
-# source( "./src/de_novo_discovery_ftns.R" )
-source( "/home/ahcorcha/tools/JAMS/src/Methyl_ChIP_ftns.R" )
-source( "/home/ahcorcha/tools/JAMS/src/de_novo_discovery_ftns.R" )
 options( error = traceback, nwarnings = 10000 )
 
 ######   IN and load data
 ################################################################################
 option_list = list(
   make_option(c("-e", "--experiment"), type="character",
-              default="CTCF_HEK293_no_motif",
+              default="CTCF_HEK293_no_motif_test",
               help="Experiment ID", metavar="character"),
 
   make_option(c("-f", "--flanking"), type="integer", default=20,
-              help="length of flanking sequence around the motif", metavar="character"),
+              help="length of flanking sequence around the motif", 
+              metavar="character"),
   
   make_option(c("-m", "--pfm_length"), type="integer", default=15,
               help="", metavar="character"),
@@ -37,15 +33,24 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=10,
+              default=30,
               help="Input directory with PFM, methylation counts etc ..."),  
-  
+
+  make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
+              default="/home/ahcorcha/repos/tools/JAMS/",
+              help="Input directory with PFM, methylation counts etc ..."),    
+    
   make_option(c("-o", "--output_dir"), type="character",
               default="./data/CTCF_demo/05_motif_discovery",
               help="", metavar="character") );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser); rm(option_list, opt_parser)
+
+source( paste0( opt$path_to_JAMS, "/src/Methyl_ChIP_ftns.R") )
+## Source_python is required for source de_novo_discovery_ftns.R
+source_python(paste0( opt$path_to_JAMS, "src/motif_discovery.py" ) )
+source( paste0( opt$path_to_JAMS, "/src/de_novo_discovery_ftns.R" ) )
 
 outdir <- opt$output_dir
 pfm_length <- opt$pfm_length
@@ -54,6 +59,9 @@ input_root <- opt$input_dir
 iterations <- opt$iterations
 experiment <- paste0( opt$experiment, "_motif_length_", pfm_length, 
                       "_flanking_", flanking )
+
+# Used for testing with Rstudio, normally commented
+setwd(opt$path_to_JAMS)
 
 outdir <- paste0( outdir, "/de_novo_motif_discovery_", experiment )
 dir.create( outdir )
@@ -101,6 +109,7 @@ rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 7500 ) )
 ######   Iteration
 ################################################################################
 cat(paste0( "Start iterations wall time: ", Sys.time(), "\n"))
+# iterations <- 20
 for (i in 1:as.integer(iterations)) {
   ### Starting iteration
   # i <- 1
@@ -244,7 +253,7 @@ write.csv( x = start_pos_list_df, row.names = FALSE,
            file = paste0( prefix, "_start_position_across_iterations.csv" ) )
 ################################################################################
 
-use warnings()
+warning()
 
 cat(paste0( "End wall time: ", Sys.time(), "\n"))
 sink()

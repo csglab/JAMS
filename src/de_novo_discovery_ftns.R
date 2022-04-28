@@ -1,5 +1,4 @@
-# source_python( "/src/motif_discovery.py" )
-source_python( "/home/ahcorcha/tools/JAMS/src/motif_discovery.py" )
+# source_python( "/home/ahcorcha/tools/JAMS/src/motif_discovery.py" )
 
 #### Notes
 ###############################################################################
@@ -677,15 +676,29 @@ create_pos_vector <- function(this_start_pos, n_cols, pfm_length){
 
 motif_pos_heatmap <- function(this_start_pos, n_cols = 201, pfm_length, iteration  ){
   
+  this_start_pos <- start_pos
+  n_cols <- 201
+  
   viz_highest_TF <- as.data.frame( t( sapply( X = this_start_pos, 
                                               FUN = create_pos_vector, 
                                               n_cols = n_cols,
                                               pfm_length = pfm_length ) ) )
   
-  # viz_highest_TF[,1:flanking] <- "only_flanking"
-  # viz_highest_TF[, (ncol(viz_highest_TF)-flanking):ncol(viz_highest_TF)] <- "only_flanking"
   
-  col_fun_tf <- structure( c("black" ), names = c( "motif" ) )
+  
+  centered_line <- list( c( rep(NA, floor(n_cols/2)), 
+                            rep("center", pfm_length), 
+                            rep(NA, floor(n_cols/2)-pfm_length) ) )
+
+  centered_lines <- rep(list(centered_line), 100)
+  centered_lines <- t( as.data.frame( centered_lines ) )
+  rownames(centered_lines) <- NULL
+  viz_highest_TF <- rbind( centered_lines, viz_highest_TF )
+  
+  
+  
+  
+  col_fun_tf <- structure( c("black", "red" ), names = c( "motif", "center" ) )
   
   # pdf( file = paste0(prefix_iteration, "_ht.pdf"), width = 9, height = 12 )
   this_title <- paste0( "Motif over peak center (+/-200bp)", 
