@@ -166,13 +166,13 @@ for (i in 1:as.integer(iterations)) {
   median_abs_pos_change <- median( abs( start_pos - new_start_pos ) )
   cat( paste0(" Median absolute position change: ", round(median_abs_pos_change, 4), "\n") )
   
-  abs_change_pos <- abs( start_pos - new_start_pos )
+  abs_change_pos <- ( start_pos - new_start_pos )
   abs_change_pos_df <- as.data.frame( abs_change_pos )
   
   phist <- ggplot( abs_change_pos_df, aes( x = abs_change_pos ) ) + 
                    geom_histogram( aes(y=..density..), binwidth = 2, colour="black", fill="white") +               
                    # geom_density( alpha=1 ) +
-                   xlim(-1, ( ncol(dat_all$x.C.all)-2*flanking) ) +
+                   xlim( -( ncol(dat_all$x.C.all)-2*flanking), ( ncol(dat_all$x.C.all)-2*flanking) ) +
                    labs(x = "Position change", y = "Density") +
                    theme_light()
   
