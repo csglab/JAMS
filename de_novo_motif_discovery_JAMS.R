@@ -33,7 +33,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=30,
+              default=5,
               help="Input directory with PFM, methylation counts etc ..."),  
 
   make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
@@ -61,7 +61,7 @@ experiment <- paste0( opt$experiment, "_motif_length_", pfm_length,
                       "_flanking_", flanking )
 
 # Used for testing with Rstudio, normally commented
-setwd(opt$path_to_JAMS)
+# setwd(opt$path_to_JAMS) # ahcorcha
 
 outdir <- paste0( outdir, "/de_novo_motif_discovery_", experiment )
 dir.create( outdir )
@@ -152,7 +152,7 @@ for (i in 1:as.integer(iterations)) {
                                                       ties.method = "first")]
 
   new_start_pos <- as.numeric( gsub( "V", "", new_start_pos ) )
-  new_start_pos <- new_start_pos + flanking
+  new_start_pos <- new_start_pos + flanking ## ahcorcha
   
   ## Change start_pos to the ones with max TF signal
   len <- length(start_pos_list)
@@ -176,7 +176,7 @@ for (i in 1:as.integer(iterations)) {
                    labs(x = "Position change", y = "Density") +
                    theme_light()
   
-  start_pos <- new_start_pos
+  start_pos <- new_start_pos 
 
   ##############################################################################
   
@@ -210,7 +210,7 @@ for (i in 1:as.integer(iterations)) {
   
   # pdf( file = paste0(prefix_iteration, "_ht.pdf"), width = 9, height = 12 )
   # draw( motif_ht ); dev.off()
-
+  
   p_motif_ht <- grid.grabExpr( draw(motif_ht, heatmap_legend_side = "bottom") )
   
   layout <- "AADD
@@ -228,6 +228,10 @@ for (i in 1:as.integer(iterations)) {
   
   ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ), 
           p1, height = 10, width = 14 )
+  
+  ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ), 
+          p_motif_ht, height = 10, width = 7 )
+  
   ###############################################################################
 
 

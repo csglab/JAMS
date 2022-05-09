@@ -1,5 +1,3 @@
-# source_python( "/home/ahcorcha/tools/JAMS/src/motif_discovery.py" )
-
 #### Notes
 ###############################################################################
 # For the de novo motif finding, 
@@ -264,7 +262,7 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos )
   col_names <- paste0( "pos.", 1:(pfm_length), "." )
   
   ### Error
-  start_extract_pos <- start_pos - flanking
+  start_extract_pos <- start_pos - flanking 
   x.A <- shift_per_row( start_extract_pos, dat_all$x.A.all, region_len)
   x.C <- shift_per_row( start_extract_pos, dat_all$x.C.all, region_len)
   x.G <- shift_per_row( start_extract_pos, dat_all$x.G.all, region_len)
@@ -676,31 +674,25 @@ create_pos_vector <- function(this_start_pos, n_cols, pfm_length){
 
 motif_pos_heatmap <- function(this_start_pos, n_cols = 201, pfm_length, iteration  ){
   
-  this_start_pos <- start_pos
-  n_cols <- 201
+  # this_start_pos <- start_pos
+  # n_cols <- 201
   
   viz_highest_TF <- as.data.frame( t( sapply( X = this_start_pos, 
                                               FUN = create_pos_vector, 
                                               n_cols = n_cols,
                                               pfm_length = pfm_length ) ) )
   
-  
-  
   centered_line <- list( c( rep(NA, floor(n_cols/2)), 
                             rep("center", pfm_length), 
                             rep(NA, floor(n_cols/2)-pfm_length) ) )
-
-  centered_lines <- rep(list(centered_line), 100)
+  
+  centered_lines <- rep(list(centered_line), round(0.01*length(this_start_pos) ) )
   centered_lines <- t( as.data.frame( centered_lines ) )
   rownames(centered_lines) <- NULL
   viz_highest_TF <- rbind( centered_lines, viz_highest_TF )
   
-  
-  
-  
   col_fun_tf <- structure( c("black", "red" ), names = c( "motif", "center" ) )
   
-  # pdf( file = paste0(prefix_iteration, "_ht.pdf"), width = 9, height = 12 )
   this_title <- paste0( "Motif over peak center (+/-200bp)", 
                         ", n = ", length( this_start_pos ) )
   
@@ -715,7 +707,6 @@ motif_pos_heatmap <- function(this_start_pos, n_cols = 201, pfm_length, iteratio
                                     column_title = this_title,
                                     raster_device = "png",
                                     use_raster = T, raster_quality = 2 )
-  # draw( ht_tf ); dev.off()
   return(ht_tf) }
 
 eval_coeffs <- function( pos_predictor, pdn_coeff, X_names ){
