@@ -49,7 +49,7 @@ opt = parse_args(opt_parser); rm(option_list, opt_parser)
 
 source( paste0( opt$path_to_JAMS, "/src/Methyl_ChIP_ftns.R") )
 ## Source_python is required for source de_novo_discovery_ftns.R
-source_python(paste0( opt$path_to_JAMS, "src/motif_discovery.py" ) )
+source_python(paste0( opt$path_to_JAMS, "/src/motif_discovery.py" ) )
 source( paste0( opt$path_to_JAMS, "/src/de_novo_discovery_ftns.R" ) )
 
 outdir <- opt$output_dir
@@ -172,7 +172,7 @@ for (i in 1:as.integer(iterations)) {
   phist <- ggplot( abs_change_pos_df, aes( x = abs_change_pos ) ) + 
                    geom_histogram( aes(y=..density..), binwidth = 2, colour="black", fill="white") +               
                    # geom_density( alpha=1 ) +
-                   xlim(0, ( ncol(dat_all$x.C.all)-2*flanking) ) +
+                   xlim(-1, ( ncol(dat_all$x.C.all)-2*flanking) ) +
                    labs(x = "Position change", y = "Density") +
                    theme_light()
   
