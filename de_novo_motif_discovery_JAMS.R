@@ -85,6 +85,7 @@ dat_all <- load_dat( input_root, pfm_length = pfm_length )
 start_pos <- rep_len(x = 100 - ceiling(pfm_length/2), # Start at peak's middle
                      length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
 
+## Start at random positions, for testing
 set.seed(5)
 start_pos <- floor( runif( nrow( dat_all$x.A.all ), 
                            min=flanking+1, 
@@ -102,8 +103,8 @@ predictors_list <- pre_calc_by_pos_dat( this_dat_all = dat_all,
                                         possible_position = possible_position, 
                                         flanking = flanking, 
                                         pfm_length = pfm_length )
-## Random (but constant from iteratiuon to iteration) peaks for motif heatmap 
-rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 7500 ) )
+## Random (but constant from iteration to iteration) peaks for motif heatmap 
+rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 100 ) )
 ################################################################################
 
 ######   Iteration
@@ -133,6 +134,32 @@ for (i in 1:as.integer(iterations)) {
   pdwn_coeffs <- pdwn_coeffs[ grepl(pattern = ":t$",
                               x = rownames(pdwn_coeffs)),]
   
+  # pdwn_coeffs <- rbind( pdwn_coeffs, 
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0"),
+  #                        c("0", "0", "0", "0", "0", "0")
+  #                        )
+  # 
+  # rownames(pdwn_coeffs) <- gsub("86", "acc.bin_down_5", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("87", "acc.bin_down_4", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("88", "acc.bin_down_3", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("89", "acc.bin_down_2", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("90", "acc.bin_down_1", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("91", "acc.bin_motif", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("92", "acc.bin_up_1", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("93", "acc.bin_up_2", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("94", "acc.bin_up_3", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("95", "acc.bin_up_4", rownames(pdwn_coeffs) )
+  # rownames(pdwn_coeffs) <- gsub("96", "acc.bin_up_5", rownames(pdwn_coeffs) )
+  
   ## Get the name of the variables included in th model
   X_var_names <- gsub( ":t", "", rownames( pdwn_coeffs ) )
   
@@ -144,10 +171,9 @@ for (i in 1:as.integer(iterations)) {
                               X_names = X_var_names )
     
   rownames(c_pdwn_predicted) <- rownames(predictors_list[[1]])
-  
-  ## Per row, get column name of max value (max TF signal).
   c_pdwn_predicted <- as.data.frame( c_pdwn_predicted )
   
+  ## Per row, get column name of max value (max TF signal).
   new_start_pos <- colnames(c_pdwn_predicted)[max.col(c_pdwn_predicted, 
                                                       ties.method = "first")]
 
@@ -157,7 +183,6 @@ for (i in 1:as.integer(iterations)) {
   ## Change start_pos to the ones with max TF signal
   len <- length(start_pos_list)
   start_pos_list[[len+1]] <- new_start_pos
-  
   
   # compare new_start_pos with start_pos
   mean_abs_pos_change <- mean( abs( start_pos - new_start_pos ) )
@@ -177,29 +202,30 @@ for (i in 1:as.integer(iterations)) {
                    theme_light()
   
   start_pos <- new_start_pos 
-
+  
   ##############################################################################
   
   
   ###### Save run's information: write coefficients / draw logo and DNA coeffs
   ######   Visualize motif start pos over iterations
   ###############################################################################
-  dna_acc_plot_name <- paste0( prefix_iteration, "_dna_coefficients.pdf" )
-  
-  p_dna_coeffs <- plot_dna_acc_coefficients( this_glm )
+  # dna_acc_plot_name <- paste0( prefix_iteration, "_dna_coefficients.pdf" )
+  # 
+  # p_dna_coeffs <- plot_dna_acc_coefficients( this_glm )
   motif_coefs <- write.sequence.model.av.met( seq_fit = this_glm )
-  
-  
-  write.table( x =  motif_coefs[[1]], quote = FALSE, sep = "\t", 
-               col.names = TRUE, row.names = TRUE,
-               file = paste0( prefix_iteration, "_coefficients_with_FDR.txt") )
-  
-  p_motif_coefs <- ( motif_coefs[[2]] / p_dna_coeffs )
-  
-  p_motif_coefs <- p_motif_coefs + 
-             plot_annotation( title = paste0(experiment, ", iteration: ", i) ) +
-             plot_layout( heights = c(2, 0.75) )
-  
+  # 
+  # 
+  # write.table( x =  motif_coefs[[1]], quote = FALSE, sep = "\t", 
+  #              col.names = TRUE, row.names = TRUE,
+  #              file = paste0( prefix_iteration, "_coefficients_with_FDR.txt") )
+  # 
+  # p_motif_coefs <- ( motif_coefs[[2]] / p_dna_coeffs )
+  p_motif_coefs <- ( motif_coefs[[2]] )
+  # 
+  # p_motif_coefs <- p_motif_coefs + 
+  #            plot_annotation( title = paste0(experiment, ", iteration: ", i) ) +
+  #            plot_layout( heights = c(2, 0.75) )
+  # 
   # ggsave( filename = paste0( prefix_iteration, "_motifs_and_dna_coeffs.pdf" ), 
   #         plot = p_motif_coefs, height = 9, width = 9 )
 
@@ -218,6 +244,10 @@ for (i in 1:as.integer(iterations)) {
              BBDD
              CCDD"
   
+  layout <- "ABDD
+             ABDD
+             CCDD"
+  
   p1 <- p_motif_coefs + phist +  p_motif_ht  + 
     plot_layout( design = layout ) +
     plot_annotation( title = paste0(experiment, 
@@ -229,8 +259,8 @@ for (i in 1:as.integer(iterations)) {
   ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ), 
           p1, height = 10, width = 14 )
   
-  ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ), 
-          p_motif_ht, height = 10, width = 7 )
+  # ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ), 
+  #         p_motif_ht, height = 10, width = 7 )
   
   ###############################################################################
 
