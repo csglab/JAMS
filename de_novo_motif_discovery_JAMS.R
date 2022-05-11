@@ -18,7 +18,7 @@ options( error = traceback, nwarnings = 10000 )
 ################################################################################
 option_list = list(
   make_option(c("-e", "--experiment"), type="character",
-              default="CTCF_HEK293_no_motif_test",
+              default="",
               help="Experiment ID", metavar="character"),
 
   make_option(c("-f", "--flanking"), type="integer", default=20,
@@ -134,32 +134,6 @@ for (i in 1:as.integer(iterations)) {
   pdwn_coeffs <- pdwn_coeffs[ grepl(pattern = ":t$",
                               x = rownames(pdwn_coeffs)),]
   
-  # pdwn_coeffs <- rbind( pdwn_coeffs, 
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0"),
-  #                        c("0", "0", "0", "0", "0", "0")
-  #                        )
-  # 
-  # rownames(pdwn_coeffs) <- gsub("86", "acc.bin_down_5", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("87", "acc.bin_down_4", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("88", "acc.bin_down_3", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("89", "acc.bin_down_2", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("90", "acc.bin_down_1", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("91", "acc.bin_motif", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("92", "acc.bin_up_1", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("93", "acc.bin_up_2", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("94", "acc.bin_up_3", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("95", "acc.bin_up_4", rownames(pdwn_coeffs) )
-  # rownames(pdwn_coeffs) <- gsub("96", "acc.bin_up_5", rownames(pdwn_coeffs) )
-  
   ## Get the name of the variables included in th model
   X_var_names <- gsub( ":t", "", rownames( pdwn_coeffs ) )
   
@@ -195,9 +169,10 @@ for (i in 1:as.integer(iterations)) {
   abs_change_pos_df <- as.data.frame( abs_change_pos )
   
   phist <- ggplot( abs_change_pos_df, aes( x = abs_change_pos ) ) + 
-                   geom_histogram( aes(y=..density..), binwidth = 2, colour="black", fill="white") +               
-                   # geom_density( alpha=1 ) +
-                   xlim( -( ncol(dat_all$x.C.all)-2*flanking), ( ncol(dat_all$x.C.all)-2*flanking) ) +
+                   geom_histogram( aes(y=..count..), binwidth = 2, 
+                                   colour="black", fill="white") +
+                   xlim( -( ncol(dat_all$x.C.all)-2*flanking), 
+                          ( ncol(dat_all$x.C.all)-2*flanking) ) +
                    labs(x = "Position change", y = "Density") +
                    theme_light()
   
@@ -209,62 +184,55 @@ for (i in 1:as.integer(iterations)) {
   ###### Save run's information: write coefficients / draw logo and DNA coeffs
   ######   Visualize motif start pos over iterations
   ###############################################################################
-  # dna_acc_plot_name <- paste0( prefix_iteration, "_dna_coefficients.pdf" )
-  # 
-  # p_dna_coeffs <- plot_dna_acc_coefficients( this_glm )
-  motif_coefs <- write.sequence.model.av.met( seq_fit = this_glm )
-  # 
-  # 
-  # write.table( x =  motif_coefs[[1]], quote = FALSE, sep = "\t", 
+  dna_acc_plot_name <- paste0( prefix_iteration, "_dna_coefficients.pdf" )
+
+  p_dna_coeffs <- plot_dna_acc_coefficients( this_glm )
+  # motif_coefs <- write.sequence.model.av.met( seq_fit = this_glm )
+
+  # write.table( x =  motif_coefs[[1]], quote = FALSE, sep = "\t",
   #              col.names = TRUE, row.names = TRUE,
   #              file = paste0( prefix_iteration, "_coefficients_with_FDR.txt") )
-  # 
+
   # p_motif_coefs <- ( motif_coefs[[2]] / p_dna_coeffs )
-  p_motif_coefs <- ( motif_coefs[[2]] )
-  # 
-  # p_motif_coefs <- p_motif_coefs + 
-  #            plot_annotation( title = paste0(experiment, ", iteration: ", i) ) +
-  #            plot_layout( heights = c(2, 0.75) )
-  # 
-  # ggsave( filename = paste0( prefix_iteration, "_motifs_and_dna_coeffs.pdf" ), 
+  p_motif_coefs <- ( p_dna_coeffs )
+  
+  p_motif_coefs <- p_motif_coefs +
+             plot_annotation( title = paste0(experiment, ", iteration: ", i ) ) +
+             plot_layout( heights = c(2, 0.75) )
+
+  # ggsave( filename = paste0( prefix_iteration, "_motifs_and_dna_coeffs.pdf" ),
   #         plot = p_motif_coefs, height = 9, width = 9 )
-
-
+  
   sample_start_pos <- start_pos[rnd_num]
   
-  motif_ht <- motif_pos_heatmap(sample_start_pos, n_cols = ncol(dat_all$x.C.all), pfm_length, i )
-  
-  # pdf( file = paste0(prefix_iteration, "_ht.pdf"), width = 9, height = 12 )
-  # draw( motif_ht ); dev.off()
+  motif_ht <- motif_pos_heatmap( sample_start_pos, n_cols = ncol(dat_all$x.C.all), pfm_length, i )
   
   p_motif_ht <- grid.grabExpr( draw(motif_ht, heatmap_legend_side = "bottom") )
   
-  layout <- "AADD
-             AADD
-             BBDD
-             CCDD"
+  # layout <- "AADD
+  #            AADD
+  #            BBDD
+  #            CCDD"
+  # layout <- "ABDD                                                                                                                                                                             
+  #            ABDD                                                                                                                                                                             
+  #            CCDD"
+  # 
+  # p1 <- p_motif_coefs + phist +  p_motif_ht  + 
+  #       plot_layout( design = layout ) +
+  #       plot_annotation(title = paste0(experiment, 
+  #                                      ", flanking: ", flanking, 
+  #                                      ", motif length:", pfm_length, 
+  #                                      ", iteration: ", i, 
+  #                                      ", n peaks: ", nrow(dat_all$x.C.all)))
+  # 
+  ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ),
+          phist, height = 5, width = 7 )
   
-  layout <- "ABDD
-             ABDD
-             CCDD"
-  
-  p1 <- p_motif_coefs + phist +  p_motif_ht  + 
-    plot_layout( design = layout ) +
-    plot_annotation( title = paste0(experiment, 
-                                    ", flanking: ", flanking, 
-                                    ", motif length:", pfm_length, 
-                                    ", iteration: ", i, 
-                                    ", n peaks: ", nrow(dat_all$x.C.all) ) )
-  
-  ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ), 
-          p1, height = 10, width = 14 )
-  
-  # ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ), 
-  #         p_motif_ht, height = 10, width = 7 )
+  ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ),
+          p_motif_ht, height = 10, width = 7 )
   
   ###############################################################################
-
-
+  
 }
 
 
