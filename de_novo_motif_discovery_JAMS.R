@@ -14,11 +14,10 @@ suppressPackageStartupMessages(library(grid))
 suppressPackageStartupMessages(library(reticulate))
 options( error = traceback, nwarnings = 10000 )
 
-######   IN and load data
-################################################################################
+########################################################   IN and load data ####
 option_list = list(
   make_option(c("-e", "--experiment"), type="character",
-              default="",
+              default="test",
               help="Experiment ID", metavar="character"),
 
   make_option(c("-f", "--flanking"), type="integer", default=20,
@@ -33,7 +32,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=5,
+              default=10,
               help="Input directory with PFM, methylation counts etc ..."),  
 
   make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
@@ -63,7 +62,7 @@ experiment <- paste0( opt$experiment, "_motif_length_", pfm_length,
 # Used for testing with Rstudio, normally commented
 # setwd(opt$path_to_JAMS) # ahcorcha
 
-outdir <- paste0( outdir, "/de_novo_motif_discovery_", experiment )
+outdir <- paste0( outdir, "/de_novo_motif_", experiment )
 dir.create( outdir )
 prefix <- paste0( outdir, "/", experiment )
 
@@ -74,11 +73,8 @@ cat(paste0( "Start wall time: ", Sys.time(), "\n"))
 cat("Loading data ...\n")
 dat_all <- load_dat( input_root, pfm_length = pfm_length )
 
-################################################################################
 
-
-######   Pre iteration
-################################################################################
+###########################################################   Pre iteration ####
 ## The starting position here makes the center of the motif is at the center of the peaks
 
 ## Start at the peak's center, intuitive
@@ -105,10 +101,8 @@ predictors_list <- pre_calc_by_pos_dat( this_dat_all = dat_all,
                                         pfm_length = pfm_length )
 ## Random (but constant from iteration to iteration) peaks for motif heatmap 
 rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 100 ) )
-################################################################################
 
-######   Iteration
-################################################################################
+###############################################################   Iteration ####
 cat(paste0( "Start iterations wall time: ", Sys.time(), "\n"))
 # iterations <- 20
 for (i in 1:as.integer(iterations)) {
@@ -117,17 +111,14 @@ for (i in 1:as.integer(iterations)) {
   cat( paste0( "Iteration: ", i, "\n" ) )
   prefix_iteration <- paste0( prefix, "_iteration_", format_iteration(i) )
 
-  ######   Train GLM
-  ##############################################################################
+  #############################################################   Train GLM ####
   this_glm <- train_GLM_at_shifted_pos( flanking = flanking, 
                                         pfm_length = pfm_length, 
                                         dat_all = dat_all,
                                         start_pos = start_pos )
-  ##############################################################################
+
   
-  
-  ######   Evaluate every position within +/- 200 bps of peak center
-  ##############################################################################
+  ############### Evaluate every position within +/- 200 bps of peak center ####
   pdwn_coeffs <- as.data.frame( coefficients( summary( this_glm ) ) )
   
   ## Get the pulldown coefficients
@@ -178,23 +169,19 @@ for (i in 1:as.integer(iterations)) {
   
   start_pos <- new_start_pos 
   
-  ##############################################################################
-  
-  
+   
+  #############################   Visualize motif start pos over iterations ####
   ###### Save run's information: write coefficients / draw logo and DNA coeffs
-  ######   Visualize motif start pos over iterations
-  ###############################################################################
   dna_acc_plot_name <- paste0( prefix_iteration, "_dna_coefficients.pdf" )
 
   p_dna_coeffs <- plot_dna_acc_coefficients( this_glm )
-  # motif_coefs <- write.sequence.model.av.met( seq_fit = this_glm )
+  motif_coefs <- write.sequence.model.av.met( seq_fit = this_glm )
 
-  # write.table( x =  motif_coefs[[1]], quote = FALSE, sep = "\t",
-  #              col.names = TRUE, row.names = TRUE,
-  #              file = paste0( prefix_iteration, "_coefficients_with_FDR.txt") )
+  write.table( x =  motif_coefs[[1]], quote = FALSE, sep = "\t",
+               col.names = TRUE, row.names = TRUE,
+               file = paste0( prefix_iteration, "_coefficients_with_FDR.txt") )
 
-  # p_motif_coefs <- ( motif_coefs[[2]] / p_dna_coeffs )
-  p_motif_coefs <- ( p_dna_coeffs )
+  p_motif_coefs <- ( motif_coefs[[2]] / p_dna_coeffs )
   
   p_motif_coefs <- p_motif_coefs +
              plot_annotation( title = paste0(experiment, ", iteration: ", i ) ) +
@@ -209,38 +196,30 @@ for (i in 1:as.integer(iterations)) {
   
   p_motif_ht <- grid.grabExpr( draw(motif_ht, heatmap_legend_side = "bottom") )
   
-  # layout <- "AADD
-  #            AADD
-  #            BBDD
-  #            CCDD"
-  # layout <- "ABDD                                                                                                                                                                             
-  #            ABDD                                                                                                                                                                             
-  #            CCDD"
-  # 
-  # p1 <- p_motif_coefs + phist +  p_motif_ht  + 
-  #       plot_layout( design = layout ) +
-  #       plot_annotation(title = paste0(experiment, 
-  #                                      ", flanking: ", flanking, 
-  #                                      ", motif length:", pfm_length, 
-  #                                      ", iteration: ", i, 
-  #                                      ", n peaks: ", nrow(dat_all$x.C.all)))
-  # 
+  layout <- "AADD
+             AADD
+             BBDD
+             CCDD"
+
+  p1 <- p_motif_coefs + phist +  p_motif_ht  +
+        plot_layout( design = layout ) +
+        plot_annotation(title = paste0(experiment,
+                                       ", flanking: ", flanking,
+                                       ", motif length:", pfm_length,
+                                       ", iteration: ", i,
+                                       ", n peaks: ", nrow(dat_all$x.C.all)))
+
   ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ),
-          phist, height = 5, width = 7 )
+          p1, height = 10, width = 14 )
   
   ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ),
           p_motif_ht, height = 10, width = 7 )
   
-  ###############################################################################
   
 }
 
 
-################################################################################
-
-
-######   Format and write start positions across iterations
-################################################################################
+######################## Format and write start positions across iterations ####
 start_pos_list_df <- as.data.frame( start_pos_list )
 colnames(start_pos_list_df) <- paste0( "iteration_", 1:ncol(start_pos_list_df) )
 rownames(start_pos_list_df) <- rownames(predictors_list[[1]])
@@ -253,10 +232,10 @@ start_pos_list_df <- cbind( start_pos_list_df[,last_cols], start_pos_list_df[,-l
 
 write.csv( x = start_pos_list_df, row.names = FALSE, 
            file = paste0( prefix, "_start_position_across_iterations.csv" ) )
-################################################################################
 
+
+####################################################################### End ####
 warning()
-
 cat(paste0( "End wall time: ", Sys.time(), "\n"))
 sink()
 
