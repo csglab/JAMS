@@ -281,8 +281,8 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos )
   
   
   
-  upstream_flank <- 1:(flanking-1)
-  motif <- flanking:(flanking+pfm_length-1)
+  upstream_flank <- 1:(flanking)
+  motif <- (flanking+1):(flanking+pfm_length)
   downstream_flank <- (flanking+pfm_length+1):(2*flanking+pfm_length)
 
   #### 

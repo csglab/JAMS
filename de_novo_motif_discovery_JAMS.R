@@ -100,7 +100,7 @@ predictors_list <- pre_calc_by_pos_dat( this_dat_all = dat_all,
                                         flanking = flanking, 
                                         pfm_length = pfm_length )
 ## Random (but constant from iteration to iteration) peaks for motif heatmap 
-rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 100 ) )
+rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 7500 ) )
 
 ###############################################################   Iteration ####
 cat(paste0( "Start iterations wall time: ", Sys.time(), "\n"))
