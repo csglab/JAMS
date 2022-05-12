@@ -81,13 +81,15 @@ load_dat <- function( input_root, pfm_length = 10 ){
   
   ## We are assuming that the input files are centered 
   # take the part of the sequence that's in range
-  center <- as.integer(ncol(acc)/2)
+  center <- as.integer(floor(ncol(acc)/2))
   
   rownames(acc) <- acc_names
   # acc$Name <- row.names(acc)
   
-  left_lim <- center - 1100 - ceiling(pfm_length/2)
-  right_lim <- center + 1100 + ceiling(pfm_length/2)
+  ## 1000 covers the bins in each side, 100 (200) on total covers the searching 
+  ## region, centered at the summit (actual PWM hit on the test)
+  left_lim <- center - 1100
+  right_lim <- center + pfm_length + 1100 # the center position is the PWM start
   
   acc <- acc[, left_lim:right_lim ]
   
@@ -234,7 +236,7 @@ shift_per_row <- function( shift_pos, df, region_len ){
 # by different values per row (by shift per row function).
 get_bin_acc <- function( acc = acc, pfm_length = pfm_length ){
   
-    acc <- data.frame( bin_down_5 = rowMeans( acc[,0:200] ),
+    acc <- data.frame( bin_down_5 = rowMeans( acc[,1:200] ),
                      bin_down_4 = rowMeans( acc[,200:400] ),
                      bin_down_3 = rowMeans( acc[,400:600] ),
                      bin_down_2 = rowMeans( acc[,600:800] ),
