@@ -120,7 +120,7 @@ cat(paste0( "Start iterations wall time: ", Sys.time(), "\n"))
 # iterations <- 20
 for (i in 1:as.integer(iterations)) {
   ### Starting iteration
-  i <- 1
+  # i <- 1
   cat( paste0( "Iteration: ", i, "\n" ) )
   prefix_iteration <- paste0( prefix, "_iteration_", format_iteration(i) )
 
@@ -129,10 +129,9 @@ for (i in 1:as.integer(iterations)) {
                                         pfm_length = pfm_length, 
                                         dat_all = dat_all,
                                         start_pos = start_pos,
-                                        # exclude_meth = opt$exclude_meth,
-                                        exclude_meth = TRUE
+                                        exclude_meth = opt$exclude_meth
                                         )
-
+  
   ############### Evaluate every position within +/- 200 bps of peak center ####
   pdwn_coeffs <- as.data.frame( coefficients( summary( this_glm ) ) )
   
