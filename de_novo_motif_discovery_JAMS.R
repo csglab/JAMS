@@ -24,7 +24,7 @@ option_list = list(
               help="length of flanking sequence around the motif", 
               metavar="character"),
   
-  make_option(c("-m", "--pfm_length"), type="integer", default=15,
+  make_option(c("-l", "--pfm_length"), type="integer", default=15,
               help="", metavar="character"),
   
   make_option(c("-d", "--input_dir"), type="character", metavar="character",
@@ -41,10 +41,17 @@ option_list = list(
     
   make_option(c("-o", "--output_dir"), type="character",
               default="./data/CTCF_demo/05_motif_discovery",
-              help="", metavar="character") );
+              help="", metavar="character"),
+  
+  make_option(c("-m", "--exclude_meth"), type="logical",
+              action = "store_true", default = "FALSE",
+              help="", metavar="character")
+    
+  );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser); rm(option_list, opt_parser)
+
 
 source( paste0( opt$path_to_JAMS, "/src/Methyl_ChIP_ftns.R") )
 ## Source_python is required for source de_novo_discovery_ftns.R
@@ -70,6 +77,12 @@ sink( paste0( prefix, "_log.txt" ) )
 cat(paste0( experiment, "\n"))
 cat(paste0( "Start wall time: ", Sys.time(), "\n"))
 
+if ( opt$exclude_meth ) {
+  cat( paste0( "Training TF models without intra-motif methylation, ",
+               "these coefficients will be added to *coefficients_with_FDR.txt ", 
+               "for conformity with other functions\n"))
+}
+  
 cat("Loading data ...\n")
 dat_all <- load_dat( input_root, pfm_length = pfm_length )
 
@@ -78,19 +91,19 @@ dat_all <- load_dat( input_root, pfm_length = pfm_length )
 ## The starting position here makes the center of the motif is at the center of the peaks
 
 ## Start at the peak's center, intuitive
-start_pos <- rep_len(x = 100 - ceiling(pfm_length/2), # Start at peak's middle
-                     length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
+# start_pos <- rep_len(x = 101 , # Start at peak's middle
+#                      length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
 
 ## Start at random positions, for testing
 set.seed(5)
-start_pos <- floor( runif( nrow( dat_all$x.A.all ), 
-                           min=flanking+1, 
+start_pos <- floor( runif( nrow( dat_all$x.A.all ),
+                           min=flanking+1,
                            max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
 
 start_pos_list <-list( start_pos )
 
 ## The furthest right we can go, position at the start of the left flank
-possible_position <- ncol( dat_all$x.C.all ) - 2*flanking - pfm_length
+possible_position <- ncol( dat_all$x.C.all ) - 2 * flanking - pfm_length
 ## Pre compute position specific predictors 
 ### Create list of length upper_limit_pos, each entry is the dat_all for the 
 ### correspondent position.
@@ -107,7 +120,7 @@ cat(paste0( "Start iterations wall time: ", Sys.time(), "\n"))
 # iterations <- 20
 for (i in 1:as.integer(iterations)) {
   ### Starting iteration
-  # i <- 1
+  i <- 1
   cat( paste0( "Iteration: ", i, "\n" ) )
   prefix_iteration <- paste0( prefix, "_iteration_", format_iteration(i) )
 
@@ -115,9 +128,11 @@ for (i in 1:as.integer(iterations)) {
   this_glm <- train_GLM_at_shifted_pos( flanking = flanking, 
                                         pfm_length = pfm_length, 
                                         dat_all = dat_all,
-                                        start_pos = start_pos )
+                                        start_pos = start_pos,
+                                        # exclude_meth = opt$exclude_meth,
+                                        exclude_meth = TRUE
+                                        )
 
-  
   ############### Evaluate every position within +/- 200 bps of peak center ####
   pdwn_coeffs <- as.data.frame( coefficients( summary( this_glm ) ) )
   
@@ -169,13 +184,12 @@ for (i in 1:as.integer(iterations)) {
   
   start_pos <- new_start_pos 
   
-   
   #############################   Visualize motif start pos over iterations ####
   ###### Save run's information: write coefficients / draw logo and DNA coeffs
   dna_acc_plot_name <- paste0( prefix_iteration, "_dna_coefficients.pdf" )
 
   p_dna_coeffs <- plot_dna_acc_coefficients( this_glm )
-  motif_coefs <- write.sequence.model.av.met( seq_fit = this_glm )
+  motif_coefs <- write.sequence.model.av.met( seq_fit = this_glm, opt$exclude_meth )
 
   write.table( x =  motif_coefs[[1]], quote = FALSE, sep = "\t",
                col.names = TRUE, row.names = TRUE,
@@ -201,23 +215,26 @@ for (i in 1:as.integer(iterations)) {
              BBDD
              CCDD"
 
+  
+  this.tittle <- paste0( experiment,
+                         ", flanking = ", flanking,
+                         ", motif length = ", pfm_length,
+                         ", iteration = ", i,
+                         ", n peaks = ", nrow(dat_all$x.C.all))
+  
+  if(opt$exclude_meth) { 
+    this.tittle <- paste0(this.tittle, ", TF model without intra-motif methylation") }
+  
   p1 <- p_motif_coefs + phist +  p_motif_ht  +
         plot_layout( design = layout ) +
-        plot_annotation(title = paste0(experiment,
-                                       ", flanking: ", flanking,
-                                       ", motif length:", pfm_length,
-                                       ", iteration: ", i,
-                                       ", n peaks: ", nrow(dat_all$x.C.all)))
+        plot_annotation(title = this.tittle )
 
   ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ),
           p1, height = 10, width = 14 )
   
   ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ),
           p_motif_ht, height = 10, width = 7 )
-  
-  
 }
-
 
 ######################## Format and write start positions across iterations ####
 start_pos_list_df <- as.data.frame( start_pos_list )

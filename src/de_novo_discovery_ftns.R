@@ -253,17 +253,17 @@ get_bin_acc <- function( acc = acc, pfm_length = pfm_length ){
 ############################################################################## #
 # 
 # 
-train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos ){
+train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos, exclude_meth ){
   
   # flanking <- flanking
   # pfm_length <- pfm_length
   # dat_all <- dat_all
+  # exclude_meth <- TRUE
   
   region_len <- 2*flanking + pfm_length
   
   col_names <- paste0( "pos.", 1:(pfm_length), "." )
   
-  ### Error
   start_extract_pos <- start_pos - flanking 
   x.A <- shift_per_row( start_extract_pos, dat_all$x.A.all, region_len)
   x.C <- shift_per_row( start_extract_pos, dat_all$x.C.all, region_len)
@@ -275,7 +275,7 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos )
   x.M <- shift_per_row( start_extract_pos, dat_all$x.M.all, region_len)
   x.W <- shift_per_row( start_extract_pos, dat_all$x.W.all, region_len)
  
-   
+  
   region_len <- 2000 + pfm_length
   acc_start_extract_pos <- start_pos
   acc <- shift_per_row( acc_start_extract_pos, dat_all$acc, region_len )
@@ -336,7 +336,25 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos )
   rownames( XX ) <- c( paste0( "control.", dat_all$target$Name ), 
                        paste0( "pulldown.", dat_all$target$Name ) )
   
-  return( MASS::glm.nb( c_tags ~ . + t + .:t, data = XX ) )
+  
+  predictor.names.ctrl <- colnames( XX )
+  predictor.names.pdwn <- paste0( predictor.names.ctrl, ":t" )
+  
+  
+  if ( exclude_meth ) {
+    predictor.names.pdwn <- predictor.names.pdwn[
+      !grepl("x\\.Met\\.pos\\..*\\.:t$", predictor.names.pdwn)] 
+    }
+  
+  predictor.names.pdwn <- paste(predictor.names.pdwn, collapse = "+")
+  predictor.names.ctrl <- paste(predictor.names.ctrl, collapse = "+")
+  
+  # c_tags ~ . + t + .:t
+  this.formula <- as.formula( 
+                   paste0( "c_tags ~ ", predictor.names.ctrl, "+t+",
+                            predictor.names.pdwn) )
+  
+  return( MASS::glm.nb( this.formula, data = XX ) )
 }
 
 
@@ -344,7 +362,7 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos )
 # 
 # Create the motif from the regression coefficients
 # Store the coefficients and their associated statistics
-write.sequence.model.av.met <- function( seq_fit ) {
+write.sequence.model.av.met <- function( seq_fit, exclude_meth ) {
 
   # label <- paste0( experiment, "_", iteration_name ) 
   # seq_fit <- this_glm
@@ -358,7 +376,7 @@ write.sequence.model.av.met <- function( seq_fit ) {
   ## Calculate the FDR for each coefficient
   coefs <- cbind( coefs, p.adjust( coefs[,4], method = "fdr" ) ) 
   colnames(coefs)[5] <- "FDR" # add the FDR to the matrix
-  
+  if(exclude_meth){ coefs <- add.meth.coeffs( coefs, pfm_length )  }
   
   # write.table( x =  coefs, quote = FALSE, sep = "\t", row.names = TRUE, 
   #              col.names = TRUE, 
@@ -713,3 +731,30 @@ motif_pos_heatmap <- function(this_start_pos, n_cols = 201, pfm_length, iteratio
 
 eval_coeffs <- function( pos_predictor, pdn_coeff, X_names ){
   return( as.vector( as.matrix( pos_predictor[, X_names]) %*% pdn_coeff ) ) }
+
+
+add.meth.coeffs <- function( pdwn_coeffs, pfm_length ){
+  
+  dummy_line1 <- rep_len( x = 0, length.out = pfm_length )
+  dummy_line2 <- rep_len( x = 1, length.out = pfm_length )
+  
+  meth_coeffs <-  data.frame( "Estimate" = dummy_line1,
+                              "Std. Error" = dummy_line1,
+                               "z value" = dummy_line1,
+                               "Pr(>|z|)" = dummy_line2, 
+                               "FDR" = dummy_line2 
+                              )
+  # x.Met.pos.6.
+  rownames(meth_coeffs) <- paste0("x.Met.pos.", 1:pfm_length, ".:t" )
+    
+  colnames(meth_coeffs) <- colnames(pdwn_coeffs)
+    
+  pdwn_coeffs <- rbind( pdwn_coeffs, meth_coeffs )
+    
+  return( as.data.frame( pdwn_coeffs ) ) }
+
+
+
+
+
+
