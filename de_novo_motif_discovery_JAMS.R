@@ -32,7 +32,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=10,
+              default=5,
               help="Input directory with PFM, methylation counts etc ..."),  
 
   make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
@@ -91,14 +91,14 @@ dat_all <- load_dat( input_root, pfm_length = pfm_length )
 ## The starting position here makes the center of the motif is at the center of the peaks
 
 ## Start at the peak's center, intuitive
-# start_pos <- rep_len(x = 101 , # Start at peak's middle
-#                      length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
+start_pos <- rep_len(x = 101 , # Start at peak's middle
+                     length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
 
 ## Start at random positions, for testing
 set.seed(5)
-start_pos <- floor( runif( nrow( dat_all$x.A.all ),
-                           min=flanking+1,
-                           max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
+# start_pos <- floor( runif( nrow( dat_all$x.A.all ),
+#                            min=flanking+1,
+#                            max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
 
 start_pos_list <-list( start_pos )
 
@@ -112,6 +112,24 @@ predictors_list <- pre_calc_by_pos_dat( this_dat_all = dat_all,
                                         possible_position = possible_position, 
                                         flanking = flanking, 
                                         pfm_length = pfm_length )
+
+# get reverse complement predictors
+rev_compl_predictors_list <- vapply( X = predictors_list,
+                                     FUN = rev_complement_predictor,
+                                     FUN.VALUE = list(possible_position),
+                                     pfm_length = pfm_length )
+
+predictors_list <- rev_compl_predictors_list
+
+# rev_compl_predictors_list <- predictors_list
+
+# ht_path <- paste0( opt$output_dir, "/ht.pdf")
+# vis_sequence(predictors_list[[101]], pfm_length, ht_path )
+# 
+# ht_path <- paste0( opt$output_dir, "/ht_rev.pdf")
+# vis_sequence(rev_compl_predictors_list[[101]], pfm_length, ht_path )
+
+
 ## Random (but constant from iteration to iteration) peaks for motif heatmap 
 rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 7500 ) )
 
@@ -213,7 +231,6 @@ for (i in 1:as.integer(iterations)) {
              AADD
              BBDD
              CCDD"
-
   
   this.tittle <- paste0( experiment,
                          ", flanking = ", flanking,

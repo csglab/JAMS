@@ -322,8 +322,8 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos, 
   t <- unlist( c( rep( 0, nrow( dat_all$target ) ), 
                   rep( 1, nrow( dat_all$target ) ) ) )
   
-  XX <- data.frame( acc = acc, x.C = x.C, x.G = x.G, x.T = x.T,
-                    x.CG = x.CG, x.Met = x.Met,
+  XX <- data.frame( acc = acc, x.C = x.C, x.G = x.G, x.T = x.T, 
+                    x.CG = x.CG, x.Met = x.Met, x.A = x.A,
                     x.T_up = x.T_up, x.C_up = x.C_up, 
                     x.G_up = x.G_up,x.M_up = x.M_up, 
                     x.W_up = x.W_up, x.T_down = x.T_down, 
@@ -338,6 +338,11 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos, 
   
   
   predictor.names.ctrl <- colnames( XX )
+  
+  # ahcorcha
+  predictor.names.ctrl <- predictor.names.ctrl[
+    !grepl("x\\.A\\.pos\\..*\\.$", predictor.names.ctrl)] 
+  
   predictor.names.pdwn <- paste0( predictor.names.ctrl, ":t" )
   
   
@@ -365,7 +370,8 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos, 
 write.sequence.model.av.met <- function( seq_fit, exclude_meth ) {
 
   # label <- paste0( experiment, "_", iteration_name ) 
-  # seq_fit <- this_glm
+  seq_fit <- this_glm
+  exclude_meth <- FALSE
   # outdir <- "./data/de_novo_discovery_test"
   
   coefs <- coefficients( summary( seq_fit ) )
@@ -580,7 +586,7 @@ pre_calc_by_pos_dat <- function( this_dat_all, possible_position, flanking = 20,
     colnames( x.CG ) <- col_names
     colnames( x.Met ) <- col_names
     
-    X <- data.frame( acc = acc, 
+    X <- data.frame( acc = acc, x.A = x.A,
                      x.C = x.C, x.G = x.G, x.T = x.T,
                      x.CG = x.CG, x.Met = x.Met,
                      x.T_up = x.T_up, x.C_up = x.C_up, 
@@ -752,6 +758,209 @@ add.meth.coeffs <- function( pdwn_coeffs, pfm_length ){
   pdwn_coeffs <- rbind( pdwn_coeffs, meth_coeffs )
     
   return( as.data.frame( pdwn_coeffs ) ) }
+
+
+rev_complement_predictor <- function( pos_specific_predictor, pfm_length ){
+  
+  rename_cols <- function( predictor_cols ){
+    
+    predictor_cols <- gsub( "^acc\\.bin_down_5$", "acc\\.bin_up_5_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_down_4$", "acc\\.bin_up_4_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_down_3$", "acc\\.bin_up_3_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_down_2$", "acc\\.bin_up_2_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_down_1$", "acc\\.bin_up_1_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_up_1$", "acc\\.bin_down_1_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_up_2$", "acc\\.bin_down_2_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_up_3$", "acc\\.bin_down_3_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_up_4$", "acc\\.bin_down_4_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^acc\\.bin_up_5$", "acc\\.bin_down_5_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.T_up$", "x\\.T_down_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.C_up$", "x\\.C_down_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.G_up$", "x\\.G_down_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.M_up$", "x\\.M_down_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.W_up$", "x\\.W_down_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.T_down$", "x\\.T_up_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.C_down$", "x\\.C_up_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.G_down$", "x\\.G_up_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.M_down$", "x\\.M_up_asdsd_tmp", predictor_cols )
+    predictor_cols <- gsub( "^x\\.W_down$", "x\\.W_up_asdsd_tmp", predictor_cols )
+
+    predictor_cols <- gsub( "_asdsd_tmp$", "", predictor_cols )
+    
+  }
+    
+  # pos_specific_predictor <- predictors_list[[1]]
+  
+  colnames(pos_specific_predictor) <- rename_cols(colnames(pos_specific_predictor))
+    
+  
+  ############################################## Name seq/CG/meth col names #### 
+  A_cols <- paste0("x.A.pos.", 1:pfm_length, ".")
+  T_cols <- paste0("x.T.pos.", 1:pfm_length, ".")
+  C_cols <- paste0("x.C.pos.", 1:pfm_length, ".")
+  G_cols <- paste0("x.G.pos.", 1:pfm_length, ".")
+  CG_cols <- paste0("x.CG.pos.", 1:pfm_length, ".")
+  Met_cols <- paste0("x.Met.pos.", 1:pfm_length, ".")
+
+  CG_cols_shift <- paste0("x.CG.pos.", 2:(pfm_length+1), ".")
+  Met_cols_shift <- paste0("x.Met.pos.", 2:(pfm_length+1), ".")
+    
+  rev_A_cols <- paste0("x.A.pos.", pfm_length:1, ".")
+  rev_T_cols <- paste0("x.T.pos.", pfm_length:1, ".")
+  rev_C_cols <- paste0("x.C.pos.", pfm_length:1, ".")
+  rev_G_cols <- paste0("x.G.pos.", pfm_length:1, ".")
+  rev_CG_cols <- paste0("x.CG.pos.", pfm_length:1, ".")
+  rev_Met_cols <- paste0("x.Met.pos.", pfm_length:1, ".")      
+  
+  ############################## Inplace reverse complement of meth and CpG #### 
+  ## Reverses and renames
+  pos_specific_predictor[, CG_cols] <- pos_specific_predictor[,rev_CG_cols]
+  pos_specific_predictor[, Met_cols] <- pos_specific_predictor[,rev_Met_cols]
+  
+  pos_specific_predictor <- pos_specific_predictor[, !colnames(pos_specific_predictor) %in% 
+                                                      c( CG_cols[1], Met_cols[1]) ]
+  
+  ## add one column at the end for CpG and Met
+  pos_specific_predictor[, CG_cols_shift[length(CG_cols_shift)] ] <- 0
+  pos_specific_predictor[, Met_cols_shift[length(Met_cols_shift)] ] <- 0
+  
+  
+  ## Rename columns 2-16 to 1-15  
+  colnames(pos_specific_predictor)[colnames(pos_specific_predictor)
+            %in% CG_cols_shift] <- CG_cols
+
+  colnames(pos_specific_predictor)[colnames(pos_specific_predictor)
+            %in% Met_cols_shift] <- Met_cols    
+  
+  
+  ################################### Get the reverse complement of T/A/C/G ####
+  rev_compl_T <- pos_specific_predictor[, rev_A_cols]
+  colnames(rev_compl_T) <- T_cols
+  
+  rev_compl_A <- pos_specific_predictor[, rev_T_cols]
+  colnames(rev_compl_A) <- A_cols
+  
+  rev_compl_C <- pos_specific_predictor[, rev_G_cols]
+  colnames(rev_compl_C) <- C_cols
+  
+  rev_compl_G <- pos_specific_predictor[, rev_C_cols]
+  colnames(rev_compl_G) <- G_cols
+  
+  rev_compl <- cbind(rev_compl_T,rev_compl_A, rev_compl_C, rev_compl_G)
+  rm(rev_compl_T,rev_compl_A, rev_compl_C, rev_compl_G); gc(verbose=FALSE)
+  
+  pos_specific_predictor <- pos_specific_predictor[,
+                     !colnames(pos_specific_predictor) %in% colnames(rev_compl)]
+  
+  return( list( cbind( pos_specific_predictor, rev_compl ) ) )
+  
+  
+  
+}
+
+
+
+vis_sequence <- function( predictors, pfm_length, ht_path ){
+  
+  # predictors <- predictors_list[[101]]
+  predictors <- head(predictors, n = 5)
+  C_bases <- predictors[, paste0( "x.C.pos.", 1:(pfm_length), "." ) ]
+  G_bases <- predictors[, paste0( "x.G.pos.", 1:(pfm_length), "." ) ]
+  G_bases[] <- base::lapply( G_bases, function(x) as.numeric( gsub("1", "2", x )) )
+  
+  T_bases <- predictors[, paste0( "x.T.pos.", 1:(pfm_length), "." ) ]
+  T_bases[] <- base::lapply( T_bases, function(x) as.numeric( gsub("1", "3", x )) )
+  
+  bases <- C_bases + G_bases + T_bases
+  
+  bases[] <- base::lapply( bases, function(x) as.character( gsub("0", "A" , x )) )
+  bases[] <- base::lapply( bases, function(x) as.character( gsub("1", "C" , x )) )
+  bases[] <- base::lapply( bases, function(x) as.character( gsub("2", "G" , x )) )
+  bases[] <- base::lapply( bases, function(x) as.character( gsub("3", "T" , x )) )
+  col_seq <- paste0( "seq.pos.", 1:pfm_length )
+  colnames(bases) <- col_seq
+  
+  acc_cols <- c( "acc.bin_down_5", "acc.bin_down_4", "acc.bin_down_3", 
+                 "acc.bin_down_2", "acc.bin_down_1", "acc.bin_motif",  
+                 "acc.bin_up_1", "acc.bin_up_2", "acc.bin_up_3", 
+                 "acc.bin_up_4", "acc.bin_up_5")
+  
+  acc <- predictors[, acc_cols ]
+  
+  met <- predictors[, paste0( "x.Met.pos.", 1:pfm_length, "." ) ]
+  met_col <- paste0( "met.pos.", 1:pfm_length )
+  colnames( met ) <- met_col
+  
+  res_dat <- cbind( met, bases, acc )
+  
+  col_fun <- colorRamp2( c( 0, 0.5, 1 ),
+                         c( "white", "red" ,"black" ) )
+
+  my_use_raster <- TRUE
+  
+  htm_met <- ComplexHeatmap::Heatmap( as.matrix( res_dat[, met_col] ), 
+                                      use_raster = my_use_raster,
+                                      raster_quality = 2,
+                                      cluster_columns = FALSE,
+                                      cluster_rows = FALSE,
+                                      show_column_names =  TRUE,
+                                      show_row_names  =  FALSE,
+                                      col = col_fun,
+                                      name = "CpG Methylation",
+                                      column_title = "meCpG" )
+  
+  #### Sequence
+  colors_bases <- structure( c("green", "orange", "blue", "red"), 
+                             names = c( "A", "G", "C", "T" ) )
+      
+  htm_seq <- ComplexHeatmap::Heatmap( as.matrix( res_dat[, col_seq] ), 
+                                      use_raster = my_use_raster,
+                                      raster_quality = 2,
+                                      cluster_columns = FALSE, 
+                                      cluster_rows = FALSE,
+                                      show_column_names =  TRUE,
+                                      show_row_names  =  FALSE,
+                                      col = colors_bases,
+                                      name = "Sequence",
+                                      column_title = "Sequence" )
+  
+  #### Accessibility
+  # diff_tmp <-  abs( max( res_dat[, acc_cols] ) -  min( res_dat[, acc_cols] ) )
+  # mid <- min( res_dat[, acc_cols] ) + diff_tmp/2
+  col_fun <- colorRamp2( c( 0, 3, 7),
+                         c( "white", "red", "black" ) )
+  
+  htm_acc <- ComplexHeatmap::Heatmap( as.matrix( res_dat[, acc_cols] ), 
+                                      use_raster = my_use_raster,
+                                      raster_quality = 2,
+                                      cluster_columns = FALSE, 
+                                      cluster_rows = FALSE,
+                                      show_column_names =  TRUE,
+                                      show_row_names  =  FALSE,
+                                      col = col_fun,
+                                      name = "Accessibility",
+                                      column_title = "Accessibility" )
+  
+  all_htm <- htm_seq + htm_acc + htm_met
+  
+  pdf( file = ht_path, width = 8, height = 5 )
+  
+  draw( all_htm, ht_gap = unit( 0.25, "cm" ), 
+        column_title = paste0( "\nn = ", nrow(res_dat)),
+        merge_legends = TRUE,
+        heatmap_legend_side = "bottom" )
+  
+  dev.off()
+  
+  
+}
+
+
+
+
+
+
+
 
 
 
