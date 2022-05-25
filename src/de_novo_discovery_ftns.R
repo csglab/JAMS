@@ -951,9 +951,45 @@ vis_sequence <- function( predictors, pfm_length, ht_path ){
         heatmap_legend_side = "bottom" )
   
   dev.off()
-  
-  
 }
+
+
+pos_to_wiggle <- function( pdwn_coeffs, shifting_pos = 5, inf_pct = 0.3 ){
+  
+  # pdwn_coeffs <- pdwn_coeffs
+  C_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.C\\.pos\\..*\\.:t$", x = rownames(pdwn_coeffs)),]
+  T_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.T\\.pos\\..*\\.:t$", x = rownames(pdwn_coeffs)),]
+  G_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.G\\.pos\\..*\\.:t$", x = rownames(pdwn_coeffs)),]
+  
+  magnitud <- "Estimate" 
+  # magnitud <- "Pr(>|z|)"
+  
+  motif <- data.frame( C_seq = C_coefs[, magnitud ],
+                       T_seq = T_coefs[, magnitud ],
+                       G_seq = G_coefs[, magnitud ] )
+  motif <- abs(motif)
+  motif$sum <- rowSums( motif[,c(1,2,3)] )
+  
+  top <- mean( motif[ order(motif$sum, decreasing = TRUE), "sum" ][1:4] )
+  
+  motif$pct <- ( motif$sum / top ) * 100
+  
+  mean_start <- mean( motif$pct[1:shifting_pos] )
+  mean_stop <- mean( motif$pct[ ( nrow(motif)-shifting_pos ):nrow(motif)] )
+  
+  
+  if((mean_start > inf_pct)&(mean_stop < inf_pct)){shift_pos <- -shifting_pos}
+  if((mean_start < inf_pct)&(mean_stop > inf_pct)){shift_pos <- +shifting_pos}
+  if((mean_start > inf_pct)&(mean_stop > inf_pct)){shift_pos <- 0}
+  if((mean_start < inf_pct)&(mean_stop < inf_pct)){shift_pos <- 0}
+  
+  return( shift_pos )
+}
+
+
+
+
+
 
 
 

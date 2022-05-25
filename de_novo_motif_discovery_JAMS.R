@@ -24,7 +24,7 @@ option_list = list(
               help="length of flanking sequence around the motif", 
               metavar="character"),
   
-  make_option(c("-l", "--pfm_length"), type="integer", default=15,
+  make_option(c("-l", "--pfm_length"), type="integer", default=25,
               help="", metavar="character"),
   
   make_option(c("-d", "--input_dir"), type="character", metavar="character",
@@ -32,7 +32,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=5,
+              default=10,
               help="Input directory with PFM, methylation counts etc ..."),  
 
   make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
@@ -43,10 +43,18 @@ option_list = list(
               default="./data/CTCF_demo/05_motif_discovery",
               help="", metavar="character"),
   
+  make_option(c("-x", "--shifting_pos"), type="integer",
+              default=5,
+              help="", metavar="character"),  
+  
+  make_option(c("-z", "--inf_pct"), type="double",
+              default=0.3,
+              help="threshold percentage of seq coeffs for shifting", 
+              metavar="character"),  
+  
   make_option(c("-m", "--exclude_meth"), type="logical",
               action = "store_true", default = "FALSE",
               help="", metavar="character")
-    
   );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -114,12 +122,18 @@ predictors_list <- pre_calc_by_pos_dat( this_dat_all = dat_all,
                                         pfm_length = pfm_length )
 
 # get reverse complement predictors
-rev_compl_predictors_list <- vapply( X = predictors_list,
-                                     FUN = rev_complement_predictor,
-                                     FUN.VALUE = list(possible_position),
-                                     pfm_length = pfm_length )
+# predictors_list <- vapply( X = predictors_list,
+#                            FUN = rev_complement_predictor,
+#                            FUN.VALUE = list(possible_position),
+#                            pfm_length = pfm_length )
+# 
+# 
+# predictors_list <- vapply( X = predictors_list,
+#                            FUN = rev_complement_predictor,
+#                            FUN.VALUE = list(possible_position),
+#                            pfm_length = pfm_length )
 
-predictors_list <- rev_compl_predictors_list
+# predictors_list <- rev_compl_predictors_list
 
 # rev_compl_predictors_list <- predictors_list
 
@@ -166,6 +180,7 @@ for (i in 1:as.integer(iterations)) {
                               FUN = eval_coeffs, 
                               pdn_coeff = pdwn_coeffs$Estimate, 
                               X_names = X_var_names )
+  ## ahcorcha use vapply
     
   rownames(c_pdwn_predicted) <- rownames(predictors_list[[1]])
   c_pdwn_predicted <- as.data.frame( c_pdwn_predicted )
@@ -217,9 +232,6 @@ for (i in 1:as.integer(iterations)) {
   p_motif_coefs <- p_motif_coefs +
              plot_annotation( title = paste0(experiment, ", iteration: ", i ) ) +
              plot_layout( heights = c(2, 0.75) )
-
-  # ggsave( filename = paste0( prefix_iteration, "_motifs_and_dna_coeffs.pdf" ),
-  #         plot = p_motif_coefs, height = 9, width = 9 )
   
   sample_start_pos <- start_pos[rnd_num]
   
@@ -250,6 +262,18 @@ for (i in 1:as.integer(iterations)) {
   
   ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ),
           p_motif_ht, height = 10, width = 7 )
+  
+  
+  if ( mean_abs_pos_change < 0.5 ){
+    
+    ## returns positions to be shifted +/- 1,2,3,4,5
+    shift_pos <- pos_to_wiggle( pdwn_coeffs, opt$shifting_pos, opt$inf_pct )
+    start_pos <- start_pos + shift_pos
+    
+    if( shift_pos == 0 ){ break }
+  }
+  
+  
 }
 
 ######################## Format and write start positions across iterations ####
