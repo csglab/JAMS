@@ -370,8 +370,8 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos, 
 write.sequence.model.av.met <- function( seq_fit, exclude_meth ) {
 
   # label <- paste0( experiment, "_", iteration_name ) 
-  seq_fit <- this_glm
-  exclude_meth <- FALSE
+  # seq_fit <- this_glm
+  # exclude_meth <- FALSE
   # outdir <- "./data/de_novo_discovery_test"
   
   coefs <- coefficients( summary( seq_fit ) )

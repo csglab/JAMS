@@ -53,7 +53,7 @@ option_list = list(
               metavar="character"),  
   
   make_option(c("-m", "--exclude_meth"), type="logical",
-              action = "store_true", default = "FALSE",
+              action = "store_true", default = "TRUE",
               help="", metavar="character") );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -107,7 +107,7 @@ start_pos <- floor( runif( nrow( dat_all$x.A.all ),
                            max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
 
 start_pos_list <-list( start_pos )
-prev_mean_abs_pos_change <- 100
+prev_mean_abs_pos_change <- 1000
 pos_limits <- c( (flanking+1), ( ncol(dat_all$x.C.all)-flanking-pfm_length ) )
 
 
