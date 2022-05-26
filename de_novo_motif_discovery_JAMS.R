@@ -32,7 +32,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=10,
+              default=20,
               help="Input directory with PFM, methylation counts etc ..."),  
 
   make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
@@ -44,7 +44,7 @@ option_list = list(
               help="", metavar="character"),
   
   make_option(c("-x", "--shifting_pos"), type="integer",
-              default=5,
+              default=3,
               help="", metavar="character"),  
   
   make_option(c("-z", "--inf_pct"), type="double",
@@ -54,12 +54,10 @@ option_list = list(
   
   make_option(c("-m", "--exclude_meth"), type="logical",
               action = "store_true", default = "FALSE",
-              help="", metavar="character")
-  );
+              help="", metavar="character") );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser); rm(option_list, opt_parser)
-
 
 source( paste0( opt$path_to_JAMS, "/src/Methyl_ChIP_ftns.R") )
 ## Source_python is required for source de_novo_discovery_ftns.R
@@ -99,16 +97,19 @@ dat_all <- load_dat( input_root, pfm_length = pfm_length )
 ## The starting position here makes the center of the motif is at the center of the peaks
 
 ## Start at the peak's center, intuitive
-start_pos <- rep_len(x = 101 , # Start at peak's middle
-                     length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
+# start_pos <- rep_len(x = 101 , # Start at peak's middle
+#                      length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
 
 ## Start at random positions, for testing
 set.seed(5)
-# start_pos <- floor( runif( nrow( dat_all$x.A.all ),
-#                            min=flanking+1,
-#                            max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
+start_pos <- floor( runif( nrow( dat_all$x.A.all ),
+                           min=flanking+1,
+                           max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
 
 start_pos_list <-list( start_pos )
+prev_mean_abs_pos_change <- 100
+pos_limits <- c( (flanking+1), ( ncol(dat_all$x.C.all)-flanking-pfm_length ) )
+
 
 ## The furthest right we can go, position at the start of the left flank
 possible_position <- ncol( dat_all$x.C.all ) - 2 * flanking - pfm_length
@@ -198,6 +199,7 @@ for (i in 1:as.integer(iterations)) {
   
   # compare new_start_pos with start_pos
   mean_abs_pos_change <- mean( abs( start_pos - new_start_pos ) )
+  
   cat( paste0("   Mean absolute position change: ", round(mean_abs_pos_change, 4), "\n") )
   
   median_abs_pos_change <- median( abs( start_pos - new_start_pos ) )
@@ -251,7 +253,7 @@ for (i in 1:as.integer(iterations)) {
                          ", n peaks = ", nrow(dat_all$x.C.all))
   
   if(opt$exclude_meth) { 
-    this.tittle <- paste0(this.tittle, ", TF model without intra-motif methylation") }
+    this.tittle <- paste0(this.tittle, ",\nTF model without intra-motif methylation") }
   
   p1 <- p_motif_coefs + phist +  p_motif_ht  +
         plot_layout( design = layout ) +
@@ -260,20 +262,29 @@ for (i in 1:as.integer(iterations)) {
   ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ),
           p1, height = 10, width = 14 )
   
-  ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ),
-          p_motif_ht, height = 10, width = 7 )
+  # ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ),
+  #         p_motif_ht, height = 10, width = 7 )
+
+  ############################################ Conditions to end iterations ####
+  delta_mean_pos_change <- abs( mean_abs_pos_change - prev_mean_abs_pos_change )
+  prev_mean_abs_pos_change <- mean_abs_pos_change
   
-  
-  if ( mean_abs_pos_change < 0.5 ){
+  if ( delta_mean_pos_change < 0.1 ){
     
     ## returns positions to be shifted +/- 1,2,3,4,5
     shift_pos <- pos_to_wiggle( pdwn_coeffs, opt$shifting_pos, opt$inf_pct )
+    
     start_pos <- start_pos + shift_pos
     
-    if( shift_pos == 0 ){ break }
-  }
-  
-  
+    ## Make sure we dont shift to upper and lower limits
+    start_pos[ start_pos < pos_limits[1] ] <- pos_limits[1]
+    start_pos[ start_pos > pos_limits[2] ] <- pos_limits[2]
+    
+    cat( paste0( "Wiggle position by: ", shift_pos, "\n" ))
+    cat( paste0( "Wiggle threshold percentage: ", opt$inf_pct, "\n" ))
+    
+    if( shift_pos == 0 ){ cat("Shift pos = 0\n"); break }
+ }
 }
 
 ######################## Format and write start positions across iterations ####
@@ -290,6 +301,14 @@ start_pos_list_df <- cbind( start_pos_list_df[,last_cols], start_pos_list_df[,-l
 write.csv( x = start_pos_list_df, row.names = FALSE, 
            file = paste0( prefix, "_start_position_across_iterations.csv" ) )
 
+######################################################## Write out TF motif ####
+write.table( x = get_motif(pdwn_coeffs, magnitud = "Estimate" ),
+           file = paste0( prefix, "_motif_from_scaled_estimate.tab" ), 
+           sep = "\t", quote = FALSE, col.names = FALSE )
+
+write.table( x = get_motif(pdwn_coeffs, magnitud = "z value" ),
+           file = paste0( prefix, "_motif_from_scaled_z_value.tab" ), 
+           sep = "\t", quote = FALSE, col.names = FALSE )
 
 ####################################################################### End ####
 warning()

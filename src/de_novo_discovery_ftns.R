@@ -956,27 +956,23 @@ vis_sequence <- function( predictors, pfm_length, ht_path ){
 
 pos_to_wiggle <- function( pdwn_coeffs, shifting_pos = 5, inf_pct = 0.3 ){
   
+  # shifting_pos <- 5
+  # inf_pct <- 0.3
   # pdwn_coeffs <- pdwn_coeffs
-  C_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.C\\.pos\\..*\\.:t$", x = rownames(pdwn_coeffs)),]
-  T_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.T\\.pos\\..*\\.:t$", x = rownames(pdwn_coeffs)),]
-  G_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.G\\.pos\\..*\\.:t$", x = rownames(pdwn_coeffs)),]
   
-  magnitud <- "Estimate" 
-  # magnitud <- "Pr(>|z|)"
+  # motif <- get_motif(pdwn_coeffs, magnitud = "Estimate" )
+  motif <- get_motif(pdwn_coeffs, magnitud = "z value" )
   
-  motif <- data.frame( C_seq = C_coefs[, magnitud ],
-                       T_seq = T_coefs[, magnitud ],
-                       G_seq = G_coefs[, magnitud ] )
-  motif <- abs(motif)
-  motif$sum <- rowSums( motif[,c(1,2,3)] )
+  motif <- as.data.frame(abs( t( motif ) ))
+  
+  motif$sum <- rowSums( motif[,1:4] )
   
   top <- mean( motif[ order(motif$sum, decreasing = TRUE), "sum" ][1:4] )
   
-  motif$pct <- ( motif$sum / top ) * 100
+  motif$pct <- ( motif$sum / top )
   
   mean_start <- mean( motif$pct[1:shifting_pos] )
   mean_stop <- mean( motif$pct[ ( nrow(motif)-shifting_pos ):nrow(motif)] )
-  
   
   if((mean_start > inf_pct)&(mean_stop < inf_pct)){shift_pos <- -shifting_pos}
   if((mean_start < inf_pct)&(mean_stop > inf_pct)){shift_pos <- +shifting_pos}
@@ -986,8 +982,27 @@ pos_to_wiggle <- function( pdwn_coeffs, shifting_pos = 5, inf_pct = 0.3 ){
   return( shift_pos )
 }
 
-
-
+get_motif <- function(pdwn_coeffs, magnitud = "Estimate" ){
+  
+  # magnitud <- "Estimate"
+  # magnitud <- "z value"
+  C_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.C\\.pos\\..*\\.:t$", 
+                                 x = rownames(pdwn_coeffs)),]
+  T_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.T\\.pos\\..*\\.:t$", 
+                                 x = rownames(pdwn_coeffs)),]
+  G_coefs <- pdwn_coeffs[ grepl( pattern = "^x\\.G\\.pos\\..*\\.:t$", 
+                                 x = rownames(pdwn_coeffs)),]
+  
+  motif <- data.frame( C_seq = C_coefs[, magnitud ],
+                       T_seq = T_coefs[, magnitud ],
+                       G_seq = G_coefs[, magnitud ],
+                       A_seq = rep.int( 0, nrow( C_coefs ) ) )
+  
+  motif <- t( motif )
+  rownames( motif ) <- c( "C", "T", "G", "A" )
+  motif <- scale( motif, center = TRUE, scale = FALSE )
+  return(as.data.frame(motif))
+}
 
 
 
