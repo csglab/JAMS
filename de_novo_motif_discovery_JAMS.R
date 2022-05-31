@@ -13,6 +13,7 @@ suppressPackageStartupMessages(library(cowplot))
 suppressPackageStartupMessages(library(grid))
 suppressPackageStartupMessages(library(reticulate))
 options( error = traceback, nwarnings = 10000 )
+set.seed(5)
 
 ########################################################   IN and load data ####
 option_list = list(
@@ -92,19 +93,32 @@ if ( opt$exclude_meth ) {
 cat("Loading data ...\n")
 dat_all <- load_dat( input_root, pfm_length = pfm_length )
 
+ninety <- sample(1:nrow(dat_all$acc), floor( nrow(dat_all$acc)*0.9) )
+
+dat_all$acc <- dat_all$acc[ninety, ]
+dat_all$x.Met.all <- dat_all$x.Met.all[ninety, ]
+dat_all$x.A.all <- dat_all$x.A.all[ninety, ]
+dat_all$x.C.all <- dat_all$x.C.all[ninety, ]
+dat_all$x.G.all <- dat_all$x.G.all[ninety, ]
+dat_all$x.T.all <- dat_all$x.T.all[ninety, ]
+dat_all$x.CpG.all <- dat_all$x.CpG.all[ninety, ]
+dat_all$x.CG.all <- dat_all$x.CG.all[ninety, ]
+dat_all$target <- dat_all$target[ninety, ]
+dat_all$x.M.all <- dat_all$x.M.all[ninety, ]
+dat_all$x.W.all <- dat_all$x.W.all[ninety, ]
+
 
 ###########################################################   Pre iteration ####
 ## The starting position here makes the center of the motif is at the center of the peaks
 
 ## Start at the peak's center, intuitive
-# start_pos <- rep_len(x = 101 , # Start at peak's middle
-#                      length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
+start_pos <- rep_len(x = 101 , # Start at peak's middle
+                     length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
 
 ## Start at random positions, for testing
-set.seed(5)
-start_pos <- floor( runif( nrow( dat_all$x.A.all ),
-                           min=flanking+1,
-                           max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
+# start_pos <- floor( runif( nrow( dat_all$x.A.all ),
+#                            min=flanking+1,
+#                            max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
 
 start_pos_list <-list( start_pos )
 prev_mean_abs_pos_change <- 1000
