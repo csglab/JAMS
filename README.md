@@ -4,7 +4,7 @@
 
 JAMS creates models for inferring the effect of CpG methylation on TF binding in vivo. It creates quantitative models that connect the strength of the binding signal observed in ChIP-seq to the DNA accessibility of the binding site, regional methylation level, DNA sequence, and base-resolution cytosine methylation. 
 
-JAMS has three main tasks (`DATA`, `GLM`, and `PREDICT`). Briefly, `DATA` extracts the information required to build the JAMS model from BAM and BIGWIG files and creates a directory with the files required by `GLM`. `GLM` builds a generalized linear model as described in the Method section of JAMS' [preprint](https://doi.org/10.1101/2021.08.27.457995). `PREDICT` predicts TF or background binding signal specified by a  BED file, it can either predict on the first position of each genomic region or look for the best motif match. 
+JAMS has three main tasks (`DATA`, `BUILD`, and `PREDICT`). Briefly, `DATA` extracts the information required to build the JAMS model from BAM and BIGWIG files and creates a directory with the files required by `BUILD`. `BUILD` builds a generalized linear model as described in the Method section of JAMS' [preprint](https://doi.org/10.1101/2021.08.27.457995). `PREDICT` predicts TF or background binding signal specified by a  BED file, it can either predict on the first position of each genomic region or look for the best motif match. 
 
 #### **Requirements:** 
 
@@ -15,7 +15,7 @@ JAMS has three main tasks (`DATA`, `GLM`, and `PREDICT`). Briefly, `DATA` extrac
 - [bwtool](https://github.com/CRG-Barcelona/bwtool) (requires [libbeato](https://github.com/CRG-Barcelona/libbeato), which has a compilation issue, a workaround can be found [here](https://github.com/CRG-Barcelona/libbeato/issues/6)).  
 - [bedtools](https://bedtools.readthedocs.io/en/latest/index.html).
 
-No installation is require for this version.  
+After cloning, you can add the line `export PATH=${DIR}/JAMS:$PATH` to your `.bashrc` file.
 
 #### **Usage:**  
 
@@ -31,7 +31,7 @@ bash download_HEK293_CTCF_demo_data.sh
 For example:
 
 ```bash
-./JAMS --task DATA,GLM \
+./JAMS --task DATA BUILD \
        --experiment ${EXPERIMENT_ID} \
        --region ${PEAKS} \
        --wgbs_met_data ${METH} \
@@ -184,21 +184,21 @@ This creates the input files to build the JAMS model:
 7. PFM file for the motif that was used to align the sequences: `*_pfm.txt`
 
 
-### **Task:** `GLM`
+### **Task:** `BUILD`
 
-To build a JAMS model with the `GLM` task you need to specify the directory with the files created in the `DATA` task. 
+To build a JAMS model with the `BUILD` task you need to specify the directory with the files created in the `DATA` task. 
 
 For example:
 
 ```bash
-./JAMS --task GLM \
+./JAMS --task BUILD \
        --experiment ${EXPERIMENT_ID} \
        --flanking ${FLANKING} \
        --data_dir ${DATA_DIR} \
        --output_dir ${OUT_DIR}
 ```
 
-The script `03_JAMS_demo_GLM.sh` is an example of the `GLM` task. Before, running extract the input files with:
+The script `03_JAMS_demo_GLM.sh` is an example of the `BUILD` task. Before, running extract the input files with:
 
 ```bash
 gunzip ./data/CTCF_demo/02_formatted_data/small_demo/*.gz
