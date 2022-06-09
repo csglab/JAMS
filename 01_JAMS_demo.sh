@@ -24,18 +24,18 @@ SUMMIT_RANGE=400
 GEN_FA=${FILE_DIR}/genome.fa
 
 
-./JAMS --task DATA GLM \
-       --experiment ${EXPERIMENT_ID} \
-       --region ${PEAKS} \
-       --wgbs_met_data ${METH} \
-       --wgbs_unmet_data ${UNMETH} \
-       --dna_acc_map ${DNA_ACC} \
-       --genome_fa ${GEN_FA} \
-       --pfm ${PFM} \
-       --chr_sizes ${CHR_SIZES} \
-       --mask_regions ${MASK_REGIONS} \
-       --bam_control ${CONTROL_BAM} \
-       --bam_pulldown ${PULLDOWN_BAM} \
-       --tag_summit_range ${SUMMIT_RANGE} \
-       --flanking 20 \
-       --output_dir ${OUT_DIR}
+JAMS --task DATA BUILD \
+     --experiment ${EXPERIMENT_ID} \
+     --region ${PEAKS} \
+     --wgbs_met_data ${METH} \
+     --wgbs_unmet_data ${UNMETH} \
+     --dna_acc_map ${DNA_ACC} \
+     --genome_fa ${GEN_FA} \
+     --pfm ${PFM} \
+     --chr_sizes ${CHR_SIZES} \
+     --mask_regions ${MASK_REGIONS} \
+     --bam_control ${CONTROL_BAM} \
+     --bam_pulldown ${PULLDOWN_BAM} \
+     --tag_summit_range ${SUMMIT_RANGE} \
+     --flanking 20 \
+     --output_dir ${OUT_DIR}

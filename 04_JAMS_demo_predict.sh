@@ -17,32 +17,32 @@ DATA_DIR=${DATA}/04_predict/data_CTCF_search
 mkdir -p ${DATA}/04_predict/out_CTCF_search
 OUT_PREFIX=${DATA}/04_predict/out_CTCF_search/CTCF_search_motif
 
-./JAMS --task PREDICT \
-       --motif_in_regions SEARCH \
-       --model_coeficients ${COEFFICIENTS} \
-       --flanking 20 \
-       --regions ${REGION} \
-       --data_dir ${DATA_DIR} \
-       --predicted_binding_prefix ${OUT_PREFIX} \
-       --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
-       --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
-       --chr_sizes ${CHR_SIZES} --pfm ${PFM}
+JAMS --task PREDICT \
+     --motif_in_regions SEARCH \
+     --model_coeficients ${COEFFICIENTS} \
+     --flanking 20 \
+     --regions ${REGION} \
+     --data_dir ${DATA_DIR} \
+     --predicted_binding_prefix ${OUT_PREFIX} \
+     --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
+     --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
+     --chr_sizes ${CHR_SIZES} --pfm ${PFM}
 
 
 DATA_DIR=${DATA}/04_predict/data_CTCF_start
 mkdir -p ${DATA}/04_predict/out_CTCF_start
 OUT_PREFIX=${DATA}/04_predict/out_CTCF_start/CTCF_use_start_as_motif
 
-./JAMS --task PREDICT \
-       --motif_in_regions START \
-       --model_coeficients ${COEFFICIENTS} \
-       --flanking 20 \
-       --regions ${REGION} \
-       --data_dir ${DATA_DIR} \
-       --predicted_binding_prefix ${OUT_PREFIX} \
-       --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
-       --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
-       --chr_sizes ${CHR_SIZES} --pfm ${PFM}
+JAMS --task PREDICT \
+     --motif_in_regions START \
+     --model_coeficients ${COEFFICIENTS} \
+     --flanking 20 \
+     --regions ${REGION} \
+     --data_dir ${DATA_DIR} \
+     --predicted_binding_prefix ${OUT_PREFIX} \
+     --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
+     --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
+     --chr_sizes ${CHR_SIZES} --pfm ${PFM}
 
 
 REGION=data/CTCF_demo/01_input_files/random.bed 
@@ -51,16 +51,16 @@ DATA_DIR=${DATA}/04_predict/data_random_start
 mkdir -p ${DATA}/04_predict/out_random_start
 OUT_PREFIX=${DATA}/04_predict/out_random_start/random_use_start_as_motif
 
-./JAMS --task PREDICT \
-       --motif_in_regions START \
-       --model_coeficients ${COEFFICIENTS} \
-       --flanking 20 \
-       --regions ${REGION} \
-       --data_dir ${DATA_DIR} \
-       --predicted_binding_prefix ${OUT_PREFIX} \
-       --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
-       --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
-       --chr_sizes ${CHR_SIZES} --pfm ${PFM}
+JAMS --task PREDICT \
+     --motif_in_regions START \
+     --model_coeficients ${COEFFICIENTS} \
+     --flanking 20 \
+     --regions ${REGION} \
+     --data_dir ${DATA_DIR} \
+     --predicted_binding_prefix ${OUT_PREFIX} \
+     --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
+     --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
+     --chr_sizes ${CHR_SIZES} --pfm ${PFM}
 
 
 
@@ -68,13 +68,13 @@ DATA_DIR=${DATA}/04_predict/data_random_search
 mkdir -p ${DATA}/04_predict/out_random_search
 OUT_PREFIX=${DATA}/04_predict/out_random_search/random_use_search_as_motif
 
-./JAMS --task PREDICT \
-       --motif_in_regions SEARCH \
-       --model_coeficients ${COEFFICIENTS} \
-       --flanking 20 \
-       --regions ${REGION} \
-       --data_dir ${DATA_DIR} \
-       --predicted_binding_prefix ${OUT_PREFIX} \
-       --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
-       --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
-       --chr_sizes ${CHR_SIZES} --pfm ${PFM}
+JAMS --task PREDICT \
+     --motif_in_regions SEARCH \
+     --model_coeficients ${COEFFICIENTS} \
+     --flanking 20 \
+     --regions ${REGION} \
+     --data_dir ${DATA_DIR} \
+     --predicted_binding_prefix ${OUT_PREFIX} \
+     --wgbs_met_data ${METH} --wgbs_unmet_data ${UNMETH} \
+     --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
+     --chr_sizes ${CHR_SIZES} --pfm ${PFM}

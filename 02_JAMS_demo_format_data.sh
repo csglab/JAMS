@@ -21,17 +21,17 @@ PULLDOWN_BAM=${FILE_DIR}/GSM2026781_hg38.bam
 SUMMIT_RANGE=400
 GEN_FA=${FILE_DIR}/genome.fa
 
-./JAMS --task DATA \
-       --experiment ${EXPERIMENT_ID} \
-       --region ${PEAKS} \
-       --wgbs_met_data ${METH} \
-       --wgbs_unmet_data ${UNMETH} \
-       --dna_acc_map ${DNA_ACC} \
-       --genome_fa ${GEN_FA} \
-       --pfm ${PWM} \
-       --chr_sizes ${CHR_SIZES} \
-       --mask_regions ${MASK_REGIONS} \
-       --bam_control ${CONTROL_BAM} \
-       --bam_pulldown ${PULLDOWN_BAM} \
-       --tag_summit_range ${SUMMIT_RANGE} \
-       --data_dir ${DATA_DIR}
+JAMS --task DATA \
+     --experiment ${EXPERIMENT_ID} \
+     --region ${PEAKS} \
+     --wgbs_met_data ${METH} \
+     --wgbs_unmet_data ${UNMETH} \
+     --dna_acc_map ${DNA_ACC} \
+     --genome_fa ${GEN_FA} \
+     --pfm ${PWM} \
+     --chr_sizes ${CHR_SIZES} \
+     --mask_regions ${MASK_REGIONS} \
+     --bam_control ${CONTROL_BAM} \
+     --bam_pulldown ${PULLDOWN_BAM} \
+     --tag_summit_range ${SUMMIT_RANGE} \
+     --data_dir ${DATA_DIR}

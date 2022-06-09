@@ -20,6 +20,7 @@ parser.add_argument('--experiment_id', dest='EXP_ID', action='store',
 ## JAMS
 parser.add_argument('--range', dest='RANGE', action='store',
                     default=100, help='RANGE')
+
 parser.add_argument('--tag_summit_range', dest='TAG_SUMMIT_RANGE',
                     action='store', default=int(400),
                     help='Range from the best motif match where the read tags will be extracted. Default= 400')
@@ -95,6 +96,10 @@ def read_external_tools():
         
 if __name__ == '__main__':
 
+    if args.TASK not in ["DATA", "BUILD", "PREDICT"]:
+        print(args.TASK, "not a TASK(s) in [DATA, BUILD or PREDICT]")
+        exit(2)
+    
     tools = read_external_tools()
 
     my_utils.run_cmd("mkdir -p %s" % ( args.OUT_PATH ))
@@ -104,14 +109,15 @@ if __name__ == '__main__':
     
     ## Create the input directory for Methyl-ChIP
     if "DATA" in args.TASK:
-
+        print("Extracting and formating data ...")
+        
         if args.IN_PATH == False:
-
+    
             args.IN_PATH = args.OUT_PATH + "/" + args.EXP_ID + "_input_dir"
             my_utils.run_cmd("mkdir -p %s" % ( args.IN_PATH ))
         
         args.PEAKS = my_utils.read_peaks(args.PEAKS)
-        print("Extracting and formating data ...")
+        
         methyl_chip.extract_data(args)
         ## Remove temporary files (*.tmp)
         my_utils.remove_tmp_files(args.IN_PATH)
@@ -119,10 +125,9 @@ if __name__ == '__main__':
     if "BUILD" in args.TASK:
         print("Building model with JAMS ...")
         methyl_chip.run_methyl_chip(args)
-
-        
+    
     if "PREDICT" in args.TASK:
-
+        print("Predicting TF binding ...")
         if ( args.PFM == "None") and ( "SEARCH" == args.MOTIF_IN_REGIONS ): 
             print("A PFM is required to search for a match")
             exit(2)
@@ -131,7 +136,7 @@ if __name__ == '__main__':
         args.EXP_ID = os.path.splitext(os.path.basename(args.PEAKS))[0]
         args.PEAKS = my_utils.read_bed(args.PEAKS)
         methyl_chip.extract_data(args)
-
+    
         ## Predict
         my_utils.run_cmd("Rscript %s/src/predict_new.R --coeffs %s --input_dir %s --flanking %s --out_prefix %s" % \
                          (os.path.dirname(os.path.realpath(__file__)), \
@@ -142,7 +147,8 @@ if __name__ == '__main__':
 
     if ("None" in args.TASK):
         print("You need to specify a taks, \nAvailable tasks: DATA,PREDICT,BUILD")
-
+    
     ## Remove temporary files (*.tmp)
+    print("Remove temporary files ...")
     my_utils.remove_tmp_files(args.OUT_PATH)
     print("DONE")
