@@ -23,9 +23,15 @@ option_list = list(
               default=20,
               help="", metavar="character"),
   
-    make_option(c("-o", "--out_prefix"), type="character",
-              default="./data/CTCF_demo/04_predict/CTCF_search_motif",
-              help="", metavar="character") );
+    make_option(c("-e", "--experiment"), type="character",
+              default="CTCF_HEK293_GSM2026781_small",
+              help="", metavar="character"), 
+  
+    make_option(c("-o", "--output_dir"), type="character",
+              default="./data/CTCF_demo/04_predict",
+              help="", metavar="character")
+  
+  );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser); rm(option_list, opt_parser)
@@ -140,7 +146,7 @@ log_c_predicted$region <- rownames(X)
 # colnames(log_c_predicted) <- c( "region_name", "log_c" )
 
 write.table( x = log_c_predicted[,c( "region", "log_c_predicted")], 
-             file = paste0( opt$out_prefix, "_predicted_binding.tab" ), 
+             file = paste0( opt$output_dir, "/", opt$experiment, "_predicted_binding.tab" ), 
              sep = "\t", quote = FALSE,
              row.names = FALSE, col.names = TRUE)
 
@@ -260,14 +266,14 @@ all_dat <- merge(x = X, y = log_c_predicted, by.x = "name", by.y = "region")
 rownames(all_dat) <- all_dat$name
 
 write.table( x = all_dat, quote = FALSE, sep = "\t", row.names = FALSE, col.names = TRUE,
-             file = paste0( opt$out_prefix, "_predicted_binding_n_predictors.tab" )
+             file = paste0( opt$output_dir, "/", opt$experiment, "_predicted_binding_n_predictors.tab" )
              )
 
 if ( nrow(all_dat) >= 1000){
   all_dat <- all_dat[ sample(1:nrow(all_dat), 1000), ]
   }
 
-htmp_name <- paste0( opt$out_prefix, "_predicted_binding_heatmap.pdf" )
+htmp_name <- paste0( opt$output_dir, "/", opt$experiment, "_predicted_binding_heatmap.pdf" )
 all_data_ht( all_data = all_dat, flanking = flanking, htmp_name = htmp_name )
 
 

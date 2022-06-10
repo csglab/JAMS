@@ -5,6 +5,7 @@ docstring sdfsdf
 import argparse
 import os
 import sys
+from os.path import exists
 from src import my_utils
 from src import rcade
 from src import methyl_chip
@@ -12,24 +13,23 @@ from src import methyl_chip
 parser = argparse.ArgumentParser(description='')
 
 parser.add_argument('--task', dest='TASK',
-                    action='store', default='None',
+                    action='store', default='default_none',
                     nargs="*", help='tasks: DATA, BUILD or PREDICT.')
 ## ID names
 parser.add_argument('--experiment_id', dest='EXP_ID', action='store',
-                    default='EXP_ID', help='Experiment ID. ex: CTCF_rep2_HEK293')
+                    default='default_none',
+                    help='Experiment ID. ex: CTCF_rep2_HEK293')
 ## JAMS
 parser.add_argument('--range', dest='RANGE', action='store',
-                    default=100, help='RANGE')
+                    default=int(100), help='RANGE')
 
 parser.add_argument('--tag_summit_range', dest='TAG_SUMMIT_RANGE',
                     action='store', default=int(400),
                     help='Range from the best motif match where the read tags will be extracted. Default= 400')
 ## Predict
 parser.add_argument('--model_coeficients', dest='COEFFS', action='store',
-                    default="", help='Model coefficient made with BUILD task')
-
-parser.add_argument('--predicted_binding_prefix', dest='PRED_BIND', action='store',
-                    default="", help='')
+                    default="default_none",
+                    help='Model coefficient made with BUILD task')
 
 parser.add_argument('--motif_in_regions', dest='MOTIF_IN_REGIONS', action='store',
                     default="SEARCH",
@@ -39,68 +39,65 @@ parser.add_argument('--motif_in_regions', dest='MOTIF_IN_REGIONS', action='store
 ####################  Input Files  ####################
 ## BAMs
 parser.add_argument('--bam_control', dest='BAM_CONTROL', action='store',
+                    default="default_none",
                     help='Indexed sorted bam file for the ChIP-seq control')
 parser.add_argument('--bam_pulldown', dest='BAM_PULLDOWN', action='store',
+                    default="default_none",
                     help='Indexed and sorted bam file for ChIP-seq  pulldown ')
 ## Peaks
 parser.add_argument('--regions', dest='PEAKS',
-                    action='store', default='None',
+                    action='store', default='default_none',
                     help='Peaks from ChiP-seq experiment, output from MACS "*_peaks.xls"')
 parser.add_argument('--pfm', dest='PFM',
-                    action='store', nargs="?",
+                    action='store', default="default_none",
                     help='Position frequency matrix, Transfac format')
 ## Methylation maps
 parser.add_argument('--wgbs_met_data', dest='MET', action='store',
+                    default = "default_none",
                     help='Methylated counts (BigWig)')
+
 parser.add_argument('--wgbs_unmet_data', dest='UNMET', action='store',
+                    default = "default_none",
                     help='Unmethylated counts (BigWig)')
 ## DNA accessibility
 parser.add_argument('--dna_acc_map', dest='DNA_ACC', action='store',
+                    default = "default_none",
                     help='Normalized DNA accessibility from ENCODE in bigwig file')
+
 parser.add_argument('--genome_fa', dest='GENOME',
-                    action='store', help='Reference sequence in the FASTA format (indexed).')
+                    default = "default_none",
+                    action='store',
+                    help='Reference sequence in the FASTA format (indexed).')
 ## Other files
 parser.add_argument('--chr_sizes', dest='CHR_SIZES',
+                    default = "default_none",
                     action='store', help='Chromosome sizes')
+
 parser.add_argument('--mask_regions', dest='REPEATS',
-                    action='store', help='Genomic regions to be masked (repeats or/and blacklisted regions).')
+                    default = "default_none", action='store',
+                    help='Genomic regions to be masked (repeats or/and blacklisted regions).')
 
 ## MAIN/JAMS output directory
 parser.add_argument('--output_dir', dest='OUT_PATH', action='store',
-                    default='./data/out',
+                    default='default_none',
                     help='The path to the folder that will contain the output files.')
 ## Formatted data files
 parser.add_argument('--data_dir', dest='IN_PATH', action='store',
-                    default=False,
+                    default="./data/out",
                     help='The path to the folder that contains the required files to build the JAMS model.')
 ## 
 parser.add_argument('--flanking', dest='FLANKING', action='store', \
-                    default='20',
+                    default=int(20),
                     help='The number of base pairs around the core motif that will be included in the model.')
 
 args = parser.parse_args()
 TAGCUTOFF = 0 # Why?
 
-if not my_utils.check_arguments(args):
-    sys.exit(2)
-
-## Tools
-def read_external_tools():
-    tools = {}
-
-    ## ahcorcha: edit these lines when running in different machines.
-    tools = { "RCADE2": "${HOME}/tools/RCADE2"}
-
-    return tools
-
         
 if __name__ == '__main__':
 
-    if args.TASK not in ["DATA", "BUILD", "PREDICT"]:
-        print(args.TASK, "not a TASK(s) in [DATA, BUILD or PREDICT]")
-        exit(2)
-    
-    tools = read_external_tools()
+    my_utils.check_tasks(args.TASK)
+    my_utils.check_arguments(args)
 
     my_utils.run_cmd("mkdir -p %s" % ( args.OUT_PATH ))
     
@@ -128,26 +125,32 @@ if __name__ == '__main__':
     
     if "PREDICT" in args.TASK:
         print("Predicting TF binding ...")
-        if ( args.PFM == "None") and ( "SEARCH" == args.MOTIF_IN_REGIONS ): 
+        if ( args.PFM == "default_none") and ( "SEARCH" == args.MOTIF_IN_REGIONS ): 
             print("A PFM is required to search for a match")
             exit(2)
+
+
+        args.EXP_ID = args.EXP_ID + "_" + args.MOTIF_IN_REGIONS
+        args.OUT_PATH = args.OUT_PATH + "/" + args.EXP_ID
+        my_utils.run_cmd("mkdir -p %s" % ( args.OUT_PATH ))
+        
+        args.IN_PATH = args.OUT_PATH + "/" + args.EXP_ID + "_predict_input_data"
+        my_utils.run_cmd("mkdir -p %s" % ( args.IN_PATH ))
+
         
         ## subtask - search best hit or use as it is.
-        args.EXP_ID = os.path.splitext(os.path.basename(args.PEAKS))[0]
         args.PEAKS = my_utils.read_bed(args.PEAKS)
         methyl_chip.extract_data(args)
     
         ## Predict
-        my_utils.run_cmd("Rscript %s/src/predict_new.R --coeffs %s --input_dir %s --flanking %s --out_prefix %s" % \
+        my_utils.run_cmd("Rscript %s/src/predict_new.R --coeffs %s --input_dir %s --flanking %s --experiment %s --output_dir %s " % \
                          (os.path.dirname(os.path.realpath(__file__)), \
                           args.COEFFS, \
                           args.IN_PATH, \
                           args.FLANKING, \
-                          args.PRED_BIND))
+                          args.EXP_ID, \
+                          args.OUT_PATH ) )
 
-    if ("None" in args.TASK):
-        print("You need to specify a taks, \nAvailable tasks: DATA,PREDICT,BUILD")
-    
     ## Remove temporary files (*.tmp)
     print("Remove temporary files ...")
     my_utils.remove_tmp_files(args.OUT_PATH)
