@@ -25,7 +25,7 @@ option_list = list(
               help="length of flanking sequence around the motif", 
               metavar="character"),
   
-  make_option(c("-l", "--pfm_length"), type="integer", default=25,
+  make_option(c("-l", "--pfm_length"), type="integer", default=15,
               help="", metavar="character"),
   
   make_option(c("-d", "--input_dir"), type="character", metavar="character",
@@ -33,7 +33,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=20,
+              default=1,
               help="Input directory with PFM, methylation counts etc ..."),  
 
   make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
@@ -41,7 +41,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),    
     
   make_option(c("-o", "--output_dir"), type="character",
-              default="./data/CTCF_demo/05_motif_discovery",
+              default="./data/CTCF_demo/05_motif_discovery/runs",
               help="", metavar="character"),
   
   make_option(c("-x", "--shifting_pos"), type="integer",
@@ -54,7 +54,7 @@ option_list = list(
               metavar="character"),  
   
   make_option(c("-m", "--exclude_meth"), type="logical",
-              action = "store_true", default = "TRUE",
+              action = "store_true", default = "FALSE",
               help="", metavar="character") );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -77,7 +77,7 @@ experiment <- paste0( opt$experiment, "_motif_length_", pfm_length,
 # setwd(opt$path_to_JAMS) # ahcorcha
 
 outdir <- paste0( outdir, "/de_novo_motif_", experiment )
-dir.create( outdir )
+dir.create( outdir, showWarnings = FALSE )
 prefix <- paste0( outdir, "/", experiment )
 
 sink( paste0( prefix, "_log.txt" ) )
@@ -93,32 +93,33 @@ if ( opt$exclude_meth ) {
 cat("Loading data ...\n")
 dat_all <- load_dat( input_root, pfm_length = pfm_length )
 
-ninety <- sample(1:nrow(dat_all$acc), floor( nrow(dat_all$acc)*0.9) )
 
-dat_all$acc <- dat_all$acc[ninety, ]
-dat_all$x.Met.all <- dat_all$x.Met.all[ninety, ]
-dat_all$x.A.all <- dat_all$x.A.all[ninety, ]
-dat_all$x.C.all <- dat_all$x.C.all[ninety, ]
-dat_all$x.G.all <- dat_all$x.G.all[ninety, ]
-dat_all$x.T.all <- dat_all$x.T.all[ninety, ]
-dat_all$x.CpG.all <- dat_all$x.CpG.all[ninety, ]
-dat_all$x.CG.all <- dat_all$x.CG.all[ninety, ]
-dat_all$target <- dat_all$target[ninety, ]
-dat_all$x.M.all <- dat_all$x.M.all[ninety, ]
-dat_all$x.W.all <- dat_all$x.W.all[ninety, ]
+################################################## Use only 90% for testing ####
+# ninety <- sample(1:nrow(dat_all$acc), floor( nrow(dat_all$acc)*0.9) )
+# dat_all$acc <- dat_all$acc[ninety, ]
+# dat_all$x.Met.all <- dat_all$x.Met.all[ninety, ]
+# dat_all$x.A.all <- dat_all$x.A.all[ninety, ]
+# dat_all$x.C.all <- dat_all$x.C.all[ninety, ]
+# dat_all$x.G.all <- dat_all$x.G.all[ninety, ]
+# dat_all$x.T.all <- dat_all$x.T.all[ninety, ]
+# dat_all$x.CpG.all <- dat_all$x.CpG.all[ninety, ]
+# dat_all$x.CG.all <- dat_all$x.CG.all[ninety, ]
+# dat_all$target <- dat_all$target[ninety, ]
+# dat_all$x.M.all <- dat_all$x.M.all[ninety, ]
+# dat_all$x.W.all <- dat_all$x.W.all[ninety, ]
 
 
 ###########################################################   Pre iteration ####
 ## The starting position here makes the center of the motif is at the center of the peaks
 
 ## Start at the peak's center, intuitive
-start_pos <- rep_len(x = 101 , # Start at peak's middle
-                     length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
+# start_pos <- rep_len(x = 101 , # Start at peak's middle
+#                      length.out = nrow(dat_all$x.Met.all)) # Number of ChIP-seq peaks
 
 ## Start at random positions, for testing
-# start_pos <- floor( runif( nrow( dat_all$x.A.all ),
-#                            min=flanking+1,
-#                            max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
+start_pos <- floor( runif( nrow( dat_all$x.A.all ),
+                           min=flanking+1,
+                           max= ncol(dat_all$x.A.all) - pfm_length - flanking  ) )
 
 start_pos_list <-list( start_pos )
 prev_mean_abs_pos_change <- 1000
@@ -142,22 +143,16 @@ predictors_list <- pre_calc_by_pos_dat( this_dat_all = dat_all,
 #                            FUN.VALUE = list(possible_position),
 #                            pfm_length = pfm_length )
 # 
-# 
 # predictors_list <- vapply( X = predictors_list,
 #                            FUN = rev_complement_predictor,
 #                            FUN.VALUE = list(possible_position),
 #                            pfm_length = pfm_length )
-
 # predictors_list <- rev_compl_predictors_list
-
 # rev_compl_predictors_list <- predictors_list
-
 # ht_path <- paste0( opt$output_dir, "/ht.pdf")
 # vis_sequence(predictors_list[[101]], pfm_length, ht_path )
-# 
 # ht_path <- paste0( opt$output_dir, "/ht_rev.pdf")
 # vis_sequence(rev_compl_predictors_list[[101]], pfm_length, ht_path )
-
 
 ## Random (but constant from iteration to iteration) peaks for motif heatmap 
 rnd_num <- sort( sample.int( nrow( dat_all$x.A.all ), 7500 ) )
@@ -170,14 +165,13 @@ for (i in 1:as.integer(iterations)) {
   # i <- 1
   cat( paste0( "Iteration: ", i, "\n" ) )
   prefix_iteration <- paste0( prefix, "_iteration_", format_iteration(i) )
-
+  
   #############################################################   Train GLM ####
   this_glm <- train_GLM_at_shifted_pos( flanking = flanking, 
                                         pfm_length = pfm_length, 
                                         dat_all = dat_all,
                                         start_pos = start_pos,
-                                        exclude_meth = opt$exclude_meth
-                                        )
+                                        exclude_meth = opt$exclude_meth )
   
   ############### Evaluate every position within +/- 200 bps of peak center ####
   pdwn_coeffs <- as.data.frame( coefficients( summary( this_glm ) ) )
@@ -275,9 +269,6 @@ for (i in 1:as.integer(iterations)) {
 
   ggsave( filename = paste0( prefix_iteration, "_logo_acc_coeffs_motif_ht.pdf" ),
           p1, height = 10, width = 14 )
-  
-  # ggsave( filename = paste0( prefix_iteration, "_only_ht.pdf" ),
-  #         p_motif_ht, height = 10, width = 7 )
 
   ############################################ Conditions to end iterations ####
   delta_mean_pos_change <- abs( mean_abs_pos_change - prev_mean_abs_pos_change )

@@ -216,20 +216,15 @@ load_dat <- function( input_root, pfm_length = 10 ){
 }
 
 ############################################################################## #
-# 
-# 
 shift_per_row <- function( shift_pos, df, region_len ){
-
+  
   new_df <- shift_per_row_py( as.vector( shift_pos ), 
                               as.matrix( df ), 
                               as.integer( region_len ) )
   
-  new_df <- t( as.data.frame( new_df ) )
-  # colnames( new_df ) <- colnames( new_df )
   rownames( new_df ) <- rownames( df ) 
   
   return( new_df ) }
-
 
 ############################################################################## #
 # This function receives an acc matrix that is already shifted 
@@ -258,13 +253,13 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos, 
   # flanking <- flanking
   # pfm_length <- pfm_length
   # dat_all <- dat_all
-  # exclude_meth <- TRUE
+  # exclude_meth <- FALSE
   
   region_len <- 2*flanking + pfm_length
-  
   col_names <- paste0( "pos.", 1:(pfm_length), "." )
   
   start_extract_pos <- start_pos - flanking 
+  
   x.A <- shift_per_row( start_extract_pos, dat_all$x.A.all, region_len)
   x.C <- shift_per_row( start_extract_pos, dat_all$x.C.all, region_len)
   x.G <- shift_per_row( start_extract_pos, dat_all$x.G.all, region_len)
@@ -280,7 +275,6 @@ train_GLM_at_shifted_pos <- function( flanking, pfm_length, dat_all, start_pos, 
   acc_start_extract_pos <- start_pos
   acc <- shift_per_row( acc_start_extract_pos, dat_all$acc, region_len )
   acc <- get_bin_acc( acc, pfm_length = pfm_length )
-  
   
   
   upstream_flank <- 1:(flanking)
@@ -415,7 +409,6 @@ write.sequence.model.av.met <- function( seq_fit, exclude_meth ) {
   coefs_control_meth$FDR[ is.na( coefs_control_meth$FDR ) ] <- 1
   coefs_control_meth[ coefs_control_meth$FDR >= 0.00001, ]$Estimate <- NA
 
-  
   coefs_pulldown_meth$FDR[ is.na( coefs_pulldown_meth$FDR ) ] <- 1
   coefs_pulldown_meth[ coefs_pulldown_meth$FDR >= 0.00001, ]$Estimate <- NA
   
@@ -606,7 +599,6 @@ pre_calc_by_pos_dat <- function( this_dat_all, possible_position, flanking = 20,
 }
 
 
-
 plot_dna_acc_coefficients <- function(fit_model){
   
   # fit_model <- fit_CpG_only$fit
@@ -693,10 +685,12 @@ format_iteration <- function(i){
   if ( ( 100 <= i) & ( i <= 99 ) ){ new_i <- paste0("", i) }
   return( new_i ) }
 
+
 create_pos_vector <- function(this_start_pos, n_cols, pfm_length){
   return(c( rep( NA, this_start_pos-1 ), 
             rep( "motif", pfm_length ), 
             rep( NA, n_cols - ( this_start_pos+pfm_length ) ) ) ) }
+
 
 motif_pos_heatmap <- function(this_start_pos, n_cols = 201, pfm_length, iteration  ){
   
@@ -734,6 +728,7 @@ motif_pos_heatmap <- function(this_start_pos, n_cols = 201, pfm_length, iteratio
                                     raster_device = "png",
                                     use_raster = T, raster_quality = 2 )
   return(ht_tf) }
+
 
 eval_coeffs <- function( pos_predictor, pdn_coeff, X_names ){
   return( as.vector( as.matrix( pos_predictor[, X_names]) %*% pdn_coeff ) ) }
@@ -859,7 +854,6 @@ rev_complement_predictor <- function( pos_specific_predictor, pfm_length ){
 }
 
 
-
 vis_sequence <- function( predictors, pfm_length, ht_path ){
   
   # predictors <- predictors_list[[101]]
@@ -981,6 +975,7 @@ pos_to_wiggle <- function( pdwn_coeffs, shifting_pos = 5, inf_pct = 0.3 ){
   
   return( shift_pos )
 }
+
 
 get_motif <- function(pdwn_coeffs, magnitud = "Estimate" ){
   
