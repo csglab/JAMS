@@ -33,7 +33,7 @@ option_list = list(
               help="Input directory with PFM, methylation counts etc ..."),
 
   make_option(c("-i", "--iterations"), type="character", metavar="character",
-              default=1,
+              default=30,
               help="Input directory with PFM, methylation counts etc ..."),  
 
   make_option(c("-p", "--path_to_JAMS"), type="character", metavar="character",
@@ -56,6 +56,7 @@ option_list = list(
   make_option(c("-m", "--exclude_meth"), type="logical",
               action = "store_true", default = "FALSE",
               help="", metavar="character") );
+
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser); rm(option_list, opt_parser)
@@ -314,6 +315,29 @@ write.table( x = get_motif(pdwn_coeffs, magnitud = "Estimate" ),
 write.table( x = get_motif(pdwn_coeffs, magnitud = "z value" ),
            file = paste0( prefix, "_motif_from_scaled_z_value.tab" ), 
            sep = "\t", quote = FALSE, col.names = FALSE )
+
+
+############################################### Write out complete motif 
+motif <- as.matrix(get_motif(pdwn_coeffs, magnitud = "z value" ))
+p_logo <- ggseqlogo( data = motif, method = "custom", seq_type = "dna" ) +
+                     ylab( "z value" )
+
+ggsave(filename = paste0( prefix, "_complete_motif_logo.pdf" ), plot = p_logo)
+
+write.pfm.cisbp( filename = paste0( prefix, "_complete_motif.pfm.txt" ), 
+                 motif = motif, motif_name = opt$experiment )
+
+
+############################################### Write out trimmed motif
+motif <- trim_motif( motif, base_th = 0.2 )
+p_logo <- ggseqlogo( data = motif, method = "custom", seq_type = "dna" ) +
+                     ylab( "z value" )
+
+ggsave(filename = paste0( prefix, "_complete_motif_logo.pdf" ), plot = p_logo)
+
+write.pfm.cisbp( filename = paste0( prefix, "_complete_motif.pfm.txt" ), 
+                 motif = motif, motif_name = opt$experiment )
+
 
 ####################################################################### End ####
 warning()

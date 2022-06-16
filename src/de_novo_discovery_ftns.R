@@ -1000,8 +1000,57 @@ get_motif <- function(pdwn_coeffs, magnitud = "Estimate" ){
 }
 
 
+write.pfm.cisbp <- function(filename, motif, motif_name = "motif_name" ){
+  
+  # filename = paste0( prefix, "_motif.pfm.txt" )
+  # motif = motif
+  # motif_name = opt$experiment
+  
+  header <- paste0( "Gene\tUnknown\n", 
+                    "Motif\t", motif_name, "\n",
+                    "Family\tUnknown\n", 
+                    "Species\tUnknown" )
+  
+  motif <- rbind( motif, Pos = 1:ncol(motif) )
+  
+  motif_header <- c("Pos", "A", "C", "G", "T")
+  out_motif <- t(motif)[, motif_header ]
+  out_motif <- rbind(motif_header, out_motif)
+  motif_string <- paste0(out_motif[,1], "\t", 
+                         out_motif[,2], "\t",
+                         out_motif[,3], "\t",
+                         out_motif[,4], "\t",
+                         out_motif[,5] )
+    
+  fileConn <- file( filename )
+  writeLines( c( header, motif_string, "\n" ), fileConn)
+  close(fileConn)
+  
+}
 
-
+trim_motif <- function( motif, base_th = 0.2 ){
+  
+  motif <- as.data.frame(t(motif))
+  motif$sum <- rowSums(abs(motif))
+  top <- mean( motif[ order(motif$sum, decreasing = TRUE), "sum" ][1:2] )
+  motif$pct <- ( motif$sum / top )
+  change_flag <- TRUE
+  
+  while ( change_flag == TRUE ) {
+    
+    change_flag <- FALSE
+    
+    if ( motif[1,"pct"] < base_th ) {
+      motif <- motif[-1,]
+      change_flag <- TRUE }
+    
+    if ( motif[ nrow(motif), "pct" ] < base_th ) {
+      motif <- motif[-nrow(motif),]
+      change_flag <- TRUE }
+  }
+  
+  return(  t( motif[, c( "C", "T", "G", "A" ) ] )  )
+}
 
 
 
