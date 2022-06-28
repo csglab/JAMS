@@ -5,7 +5,6 @@ suppressPackageStartupMessages(require(ComplexHeatmap))
 suppressPackageStartupMessages(require(circlize))
 
 options( error = traceback, nwarnings = 10000 )
-source(  "./src/Methyl_ChIP_ftns.R" )
 
 # setwd( "/home/ahcorcha/repos/tools/JAMS" )
 # source(  "./src/Methyl_ChIP_ftns.R" )
@@ -29,12 +28,20 @@ option_list = list(
   
     make_option(c("-o", "--output_dir"), type="character",
               default="./data/CTCF_demo/04_predict",
+              help="", metavar="character"),
+  
+    make_option(c("-s", "--script_path"), type="character",
+              default="/home/ahcorcha/repos/tools/vanilla_JAMS/src",
               help="", metavar="character")
   
   );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser); rm(option_list, opt_parser)
+
+
+source(  paste0( opt$script_path, "/src/Methyl_ChIP_ftns.R" ) )
+
 flanking <- opt$flanking
 
 # opt$input_dir <- "./data/CTCF_demo/04_predict"

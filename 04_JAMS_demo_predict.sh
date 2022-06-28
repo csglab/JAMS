@@ -29,7 +29,6 @@ JAMS --task PREDICT \
      --dna_acc_map ${DNA_ACC} --genome_fa ${GEN_FA} \
      --chr_sizes ${CHR_SIZES} --pfm ${PFM}
 
-
 JAMS --task PREDICT \
      --motif_in_regions START \
      --model_coeficients ${COEFFICIENTS} \

@@ -143,13 +143,14 @@ if __name__ == '__main__':
         methyl_chip.extract_data(args)
     
         ## Predict
-        my_utils.run_cmd("Rscript %s/src/predict_new.R --coeffs %s --input_dir %s --flanking %s --experiment %s --output_dir %s " % \
+        my_utils.run_cmd("Rscript %s/src/predict_new.R --coeffs %s --input_dir %s --flanking %s --experiment %s --output_dir %s --script_path %s " % \
                          (os.path.dirname(os.path.realpath(__file__)), \
                           args.COEFFS, \
                           args.IN_PATH, \
                           args.FLANKING, \
                           args.EXP_ID, \
-                          args.OUT_PATH ) )
+                          args.OUT_PATH, \
+                          os.path.dirname(os.path.realpath(__file__) ) ) )
 
     ## Remove temporary files (*.tmp)
     print("Remove temporary files ...")

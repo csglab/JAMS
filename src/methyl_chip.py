@@ -114,13 +114,14 @@ def run_methyl_chip(args):
     MC_INPUT_DIR = args.IN_PATH
     methyl_dir = my_utils.check_path(MC_INPUT_DIR)
     my_utils.remove_tmp_files(MC_INPUT_DIR)
-    
-    methyl_cmd = "Rscript %s/JAMS_GLM.R --experiment %s --flanking %s --input_dir %s --output_dir %s " % \
-      ( os.path.dirname(os.path.realpath(__file__)), \
-        args.EXP_ID, \
-        args.FLANKING, \
-        MC_INPUT_DIR, \
-        args.OUT_PATH )
+
+    methyl_cmd = "Rscript %s/JAMS_GLM.R --experiment %s --flanking %s --input_dir %s --output_dir %s --script_path %s" % \
+        ( os.path.dirname(os.path.realpath(__file__)), \
+          args.EXP_ID, \
+          args.FLANKING, \
+          MC_INPUT_DIR, \
+          args.OUT_PATH, \
+          os.path.dirname(os.path.realpath(__file__)) )
         
     my_utils.run_cmd(methyl_cmd, dry=False)
 

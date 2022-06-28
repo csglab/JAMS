@@ -11,7 +11,8 @@ suppressPackageStartupMessages(require(MASS))
 suppressPackageStartupMessages(require(patchwork))
 
 options( error = traceback, nwarnings = 10000 )
-source( "./src/Methyl_ChIP_ftns.R" )
+# source( "/home/ahcorcha/repos/tools/vanilla_JAMS/src/Methyl_ChIP_ftns.R" ) # ahcorcha
+
 
 ############################################################################## #
 ################################ Read I/O. ################################### #
@@ -30,10 +31,17 @@ option_list = list(
 
   make_option(c("-o", "--output_dir"), type="character",
               default="./data/CTCF_demo/03_output",
-              help="", metavar="character") );
+              help="", metavar="character"),
+  
+  make_option(c("-s", "--script_path"), type="character",
+              default="/home/ahcorcha/repos/tools/vanilla_JAMS/src",
+              help="", metavar="character")
+  );
 
 opt_parser = OptionParser(option_list=option_list);
 opt = parse_args(opt_parser); rm(option_list, opt_parser)
+
+source( paste0( opt$script_path, "/Methyl_ChIP_ftns.R" ) )
 
 ### Create output directory
 outdir <- paste0( opt$output_dir, "/JAMS_", opt$experiment, 
