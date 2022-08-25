@@ -238,7 +238,7 @@ The script `04_JAMS_demo_predict.sh` is an example of the `PREDICT` task.
 - `<OUT_PREFIX>_predicted_binding.tab` – Region names with predicted binding.  
 
 #### **Citation:**
-Hernandez-Corchado, A., & Najafabadi, H. S. (2021). A base-resolution panorama of the in vivo impact of cytosine methylation on transcription factor binding. BioRxiv. https://doi.org/10.1101/2021.08.27.457995
+Hernandez-Corchado, A., Najafabadi, H.S. Toward a base-resolution panorama of the in vivo impact of cytosine methylation on transcription factor binding. Genome Biol 23, 151 (2022). https://doi.org/10.1186/s13059-022-02713-y
 
 
 
